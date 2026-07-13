@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import type { Card, FormData } from '@/shared/types';
 import type { RealCard } from './types';
 import { getRealPerspectives, streamSimulation } from './api';
@@ -152,10 +152,10 @@ function RealCardItem({ card, index, onRemove }: { card: RealCard; index: number
 interface Props {
   formData: FormData;
   cards: Card[];
-  setCards: (c: Card[]) => void;
+  setCards: Dispatch<SetStateAction<Card[]>>;
   realCards: RealCard[];
   setRealCards: (c: RealCard[] | ((prev: RealCard[]) => RealCard[])) => void;
-  onNext: () => void;
+  onNext: (cardsForAnalysis: Card[]) => void;
 }
 
 const SIM_STEPS = [
@@ -164,6 +164,15 @@ const SIM_STEPS = [
   'Building user personas',
   'Simulating reactions',
 ];
+
+function realCardToAnalysisCard(rc: RealCard): Card {
+  return {
+    perspective: rc.persona,
+    driver: '',
+    thought: rc.quote,
+    highlight: rc.highlight,
+  };
+}
 
 export default function SimulationPage({ formData, cards, setCards, realCards, setRealCards, onNext }: Props) {
   const [streaming, setStreaming] = useState(false);
@@ -289,12 +298,17 @@ export default function SimulationPage({ formData, cards, setCards, realCards, s
   }
 
   const removeCard = (i: number) => {
-    const updated = cards.filter((_, idx) => idx !== i);
-    cardsRef.current = updated;
-    setCards(updated);
+    setCards(prev => {
+      const updated = prev.filter((_, idx) => idx !== i);
+      cardsRef.current = updated;
+      return updated;
+    });
   };
 
   const removeRealCard = (i: number) => setRealCards(prev => prev.filter((_, idx) => idx !== i));
+
+  const selectedCount = cards.length + realCards.length;
+  const cardsForAnalysis = [...cards, ...realCards.map(realCardToAnalysisCard)];
 
   // User-contributed perspectives — things they've actually heard/observed. Optional.
   const [showManual, setShowManual] = useState(false);
@@ -337,9 +351,9 @@ export default function SimulationPage({ formData, cards, setCards, realCards, s
             </div>
           )}
         </div>
-        {done && cards.length > 0 && (
+        {done && selectedCount > 0 && (
           <p className="mt-3 text-sm" style={{ color: '#6E6E73' }}>
-            {cards.length} behavioral perspectives · click a card to reveal worry & assumption · × to remove
+            {selectedCount} perspective{selectedCount !== 1 ? 's' : ''} · click a card to reveal worry & assumption · × to remove
           </p>
         )}
 
@@ -582,12 +596,12 @@ export default function SimulationPage({ formData, cards, setCards, realCards, s
             )}
           </div>
 
-          {cards.length > 0 && (
+          {selectedCount > 0 && (
             <div className="mt-10 pt-8 flex items-center justify-between" style={{ borderTop: '1px solid #D2D2D7' }}>
               <p className="text-sm" style={{ color: '#6E6E73' }}>
-                {cards.length} perspective{cards.length !== 1 ? 's' : ''} selected
+                {selectedCount} perspective{selectedCount !== 1 ? 's' : ''} selected
               </p>
-              <button onClick={onNext} className="btn-primary">
+              <button onClick={() => onNext(cardsForAnalysis)} className="btn-primary">
                 Analyze Insights
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                   <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />

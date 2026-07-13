@@ -74,7 +74,7 @@ export default function App() {
 
   const isReachable = (p: Page) =>
     p === 'input' ||
-    (p === 'simulation' && cards.length > 0) ||
+    (p === 'simulation' && (cards.length > 0 || realCards.length > 0)) ||
     (p === 'insights' && insights !== null) ||
     (p === 'prd' && prdData !== null);
 
@@ -178,7 +178,7 @@ export default function App() {
             setCards={setCards}
             realCards={realCards}
             setRealCards={setRealCards}
-            onNext={() => navigate('insights')}
+            onNext={(cardsForAnalysis) => { setCards(cardsForAnalysis); navigate('insights'); }}
           />
         )}
         {page === 'insights' && (
