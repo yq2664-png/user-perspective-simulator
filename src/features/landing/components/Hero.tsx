@@ -39,15 +39,12 @@ export default function Hero({ onStart }: Props) {
         <HeroPersonaCluster />
       </div>
 
-      <p style={{
-        fontSize: 16,
-        fontWeight: 400,
-        color: '#6E6E73',
-        lineHeight: 1.5,
-        margin: '0 0 26px',
-        maxWidth: 680,
-      }}>
-        Paste in your product description. Explore AI-generated user perspectives and behavioral insights that reveal hidden motivations, reactions, and design opportunities.
+      <p className="hero-subheadline">
+        Paste in your product description.
+        <br />
+        <span className="hero-subheadline__detail">
+          Explore AI-generated user perspectives and behavioral insights that reveal hidden motivations, reactions, and design opportunities.
+        </span>
       </p>
 
       {/* CTA */}

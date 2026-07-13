@@ -131,6 +131,36 @@
     gap: 0;
   }
 
+  .hero-subheadline {
+    font-size: 16px;
+    font-weight: 400;
+    color: #6E6E73;
+    line-height: 1.5;
+    margin: 0 0 26px;
+    max-width: 680px;
+  }
+
+  .hero-subheadline__detail {
+    white-space: normal;
+  }
+
+  @media (max-width: 767px) {
+    .hero-section__inner {
+      padding-left: 24px;
+      padding-right: 24px;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .hero-subheadline {
+      max-width: none;
+    }
+
+    .hero-subheadline__detail {
+      white-space: nowrap;
+    }
+  }
+
   /* Landing CTA — deep teal, pill, tactile (solid) */
   .btn-vintage {
     @apply inline-flex items-center gap-2 cursor-pointer;
