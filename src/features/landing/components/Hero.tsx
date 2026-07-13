@@ -30,7 +30,7 @@ export default function Hero({ onStart }: Props) {
         margin: '0 0 104px',
         maxWidth: 720,
       }}>
-        Discover what users need<br />before they tell you.
+        Know what your users might actually think.
       </h1>
 
       {/* Persona cluster — spans full content width, aligned with the nav.
@@ -39,17 +39,15 @@ export default function Hero({ onStart }: Props) {
         <HeroPersonaCluster />
       </div>
 
-      {/* Description — single line */}
       <p style={{
         fontSize: 16,
         fontWeight: 400,
         color: '#6E6E73',
         lineHeight: 1.5,
         margin: '0 0 26px',
-        maxWidth: 'none',
-        whiteSpace: 'nowrap',
+        maxWidth: 680,
       }}>
-        Paste in a product description. Get AI-generated user perspectives and behavioral insights — grounded in how real people think.
+        Paste in your product description. Explore AI-generated user perspectives and behavioral insights that reveal hidden motivations, reactions, and design opportunities.
       </p>
 
       {/* CTA */}

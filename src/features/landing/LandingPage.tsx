@@ -8,40 +8,40 @@ const STEPS = [
   {
     num: '01',
     title: 'Describe your product',
-    body: 'Name, type, and core functions. Optionally upload screenshots or design docs.',
+    body: "Tell us what you're building. Add the product type, core experience, and optionally upload supporting materials.",
   },
   {
     num: '02',
-    title: 'See user perspectives',
-    body: '8 distinct user archetypes react to your product in real time — streamed as they generate.',
+    title: 'Simulate user perspectives',
+    body: 'AI generates diverse user perspectives that reveal how different people might perceive and respond to your product.',
   },
   {
     num: '03',
-    title: 'Read the insights',
-    body: 'Frustrations, hidden needs, decision barriers, trust issues — ranked by impact.',
+    title: 'Reveal design insights',
+    body: 'Uncover hidden motivations, unmet needs, and opportunities behind user behavior.',
   },
   {
     num: '04',
-    title: 'Export the PRD',
-    body: 'A structured product requirements document tied directly to real user evidence.',
+    title: 'Generate the PRD',
+    body: 'Convert research insights into a structured PRD with prioritized product opportunities.',
   },
 ];
 
 const FEATURES = [
   {
-    label: 'Perspectives',
-    title: 'Think like your users',
-    body: 'Simulate how different user archetypes — from early adopters to skeptics — perceive your product before a single line of code ships.',
+    label: 'User Perspectives',
+    title: 'See your product through different eyes',
+    body: 'Explore how different users might think, feel, and respond before launching.',
   },
   {
-    label: 'Insights',
-    title: 'Surface hidden friction',
-    body: "Go beyond surface-level feedback. Uncover what users want but can't articulate, and what quietly blocks them from converting.",
+    label: 'Design Insights',
+    title: 'Understand why users behave the way they do',
+    body: 'Reveal hidden motivations, unmet needs, and the opportunities behind user behavior.',
   },
   {
-    label: 'PRD',
-    title: 'Requirements from evidence',
-    body: 'Skip the guesswork. Every requirement traces back to a real user need identified in the research.',
+    label: 'Actionable PRD',
+    title: 'From research to product decisions',
+    body: 'Transform insights into a clear, structured PRD with evidence-backed recommendations.',
   },
 ];
 
