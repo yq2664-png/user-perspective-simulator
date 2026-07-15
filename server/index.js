@@ -11,6 +11,10 @@ import simulate from './features/simulate.js';
 import realPerspectives from './features/realPerspectives.js';
 import verifyProduct from './features/verifyProduct.js';
 import insights from './features/insights.js';
+import reasoning from './features/reasoning.js';
+import uxReview from './features/uxReview.js';
+import opportunities from './features/opportunities.js';
+import designReview from './features/designReview.js';
 import prd from './features/prd.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -25,6 +29,10 @@ app.post('/api/simulate', upload.fields([{ name: 'screenshots', maxCount: 5 }, {
 app.post('/api/real-perspectives', realPerspectives);
 app.post('/api/verify-product', verifyProduct);
 app.post('/api/insights', insights);
+app.post('/api/reasoning', reasoning);
+app.post('/api/ux-review', uxReview);
+app.post('/api/opportunities', opportunities);
+app.post('/api/design-review', designReview);
 app.post('/api/prd', prd);
 
 // Serve frontend in production

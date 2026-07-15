@@ -5,12 +5,15 @@ export interface PRDSection {
   name: string;
   priority: 'Critical' | 'High' | 'Medium' | 'Low';
   impact: 'High' | 'Medium' | 'Low';
-  confidence: number;   // 0–100
+  confidence: number;
   effort: EffortLevel;
   problem: string;
   userStory: string;
   requirement: string;
   successMetric: string;
+  userEvidence: string;
+  behavioralInsight: string;
+  relatedHeuristic: string;
 }
 
 export interface PRDData {

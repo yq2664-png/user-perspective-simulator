@@ -334,14 +334,14 @@ export default function SimulationPage({ formData, cards, setCards, realCards, s
   const isLoading = streaming || loadingMore;
 
   return (
-    <main className="page-container py-20 sm:py-28">
+    <main className="step-page">
 
       {/* Header */}
-      <div className="mb-16">
-        <p className="label-tag mb-6">{formData.productName}</p>
+      <div className="step-header">
+        <p className="label-tag">{formData.productName}</p>
         <div className="flex items-end gap-6">
           <h1 className="font-semibold text-[#1D1D1F] leading-tight" style={{ fontSize: 'clamp(32px, 4vw, 48px)', letterSpacing: '-0.3px' }}>
-            Behavioral Perspectives
+            Perspectives
           </h1>
           {isLoading && (
             <div className="flex items-center gap-1.5 mb-2.5">
@@ -353,13 +353,16 @@ export default function SimulationPage({ formData, cards, setCards, realCards, s
         </div>
         {done && selectedCount > 0 && (
           <p className="mt-3 text-sm" style={{ color: '#6E6E73' }}>
-            {selectedCount} perspective{selectedCount !== 1 ? 's' : ''} · click a card to reveal worry & assumption · × to remove
+            How would users see it? · {selectedCount} perspective{selectedCount !== 1 ? 's' : ''} selected
           </p>
+        )}
+        {!done && !isLoading && (
+          <p className="mt-3 text-sm" style={{ color: '#6E6E73' }}>How would users see it?</p>
         )}
 
         {/* Inline loading step list */}
         {streaming && (
-          <div className="mt-8 space-y-2">
+          <div className="step-progress">
             {SIM_STEPS.map((step, i) => (
               <div key={i} className={`flex items-center gap-3 transition-all duration-300 ${i <= simStep ? 'opacity-100' : 'opacity-20'}`}>
                 <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{

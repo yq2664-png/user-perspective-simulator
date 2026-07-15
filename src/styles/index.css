@@ -33,6 +33,28 @@
     @apply max-w-[1200px] mx-auto px-6 sm:px-10 lg:px-16;
   }
 
+  /* Pipeline step pages — tighter top spacing */
+  .step-page {
+    @apply page-container pt-12 pb-16 sm:pt-14 sm:pb-20;
+  }
+
+  .step-header {
+    @apply mb-8;
+  }
+
+  .step-header .label-tag {
+    @apply mb-4;
+  }
+
+  .step-progress {
+    @apply mt-5 space-y-2;
+  }
+
+  .step-section-title {
+    @apply text-sm font-semibold mb-3;
+    color: #127A74;
+  }
+
   .label-tag {
     @apply text-[10px] tracking-[0.2em] uppercase;
     color: #6E6E73;

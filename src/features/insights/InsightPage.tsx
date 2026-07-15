@@ -8,7 +8,7 @@ interface Props {
   cards: Card[];
   insights: Insights | null;
   setInsights: (i: Insights) => void;
-  onNext: () => void;
+  onNext: (selectedInsights: Insights) => void;
 }
 
 const SECTIONS: { key: keyof Insights; label: string; description: string }[] = [
@@ -348,14 +348,14 @@ export default function InsightPage({ productName, cards, insights, setInsights,
   const insightStepTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   return (
-    <main className="page-container py-20 sm:py-28">
+    <main className="step-page">
 
       {/* Header */}
-      <div className="mb-12">
-        <p className="label-tag mb-6">{productName}</p>
+      <div className="step-header">
+        <p className="label-tag">{productName}</p>
         <div className="flex items-end gap-5">
           <h1 className="font-semibold text-[#1D1D1F] leading-tight" style={{ fontSize: 'clamp(32px, 4vw, 48px)', letterSpacing: '-0.3px' }}>
-            Research Insights
+            Insights
           </h1>
           {loading && (
             <div className="flex items-center gap-1.5 mb-2.5">
@@ -365,13 +365,16 @@ export default function InsightPage({ productName, cards, insights, setInsights,
         </div>
         {!loading && insights && (
           <p className="mt-3 text-sm" style={{ color: '#6E6E73' }}>
-            Synthesized from {cards.length} perspectives · click any insight to include or exclude
+            Why would users think that way? · {totalInsights} insights from {cards.length} perspectives
           </p>
+        )}
+        {!loading && !insights && (
+          <p className="mt-3 text-sm" style={{ color: '#6E6E73' }}>Why would users think that way?</p>
         )}
 
         {/* Inline loading steps */}
         {loading && (
-          <div className="mt-8 space-y-2">
+          <div className="step-progress">
             {INSIGHT_STEPS.map((step, i) => (
               <div key={i} className={`flex items-center gap-3 transition-all duration-300 ${i <= insightStep ? 'opacity-100' : 'opacity-20'}`}>
                 <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{
@@ -495,11 +498,11 @@ export default function InsightPage({ productName, cards, insights, setInsights,
               </button>
             </div>
             <button
-              onClick={onNext}
+              onClick={() => onNext(getSelectedInsights())}
               disabled={selected.size === 0}
               className={`btn-primary ${selected.size === 0 ? 'opacity-30 cursor-not-allowed' : ''}`}
             >
-              Generate Decisions
+              Continue to reasoning
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>

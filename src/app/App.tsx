@@ -4,11 +4,25 @@ import type { Page } from './routes';
 import type { FormData, Card, Insights } from '@/shared/types';
 import type { RealCard } from '@/features/perspectives/types';
 import type { PRDData } from '@/features/decisions/types';
+import type { OpportunitiesData } from '@/features/opportunities/types';
+import type { DesignReviewData } from '@/features/design-review/types';
+import type { ReasoningData } from '@/features/reasoning/types';
 import LandingPage from '@/features/landing/LandingPage';
 import InputPage from '@/features/intake/InputPage';
 import SimulationPage from '@/features/perspectives/SimulationPage';
 import InsightPage from '@/features/insights/InsightPage';
-import PRDPage from '@/features/decisions/PRDPage';
+import ReasoningPage from '@/features/reasoning/ReasoningPage';
+import DesignReviewPage from '@/features/design-review/DesignReviewPage';
+import DecisionsPage from '@/features/decisions/DecisionsPage';
+import {
+  DEMO_PRODUCT,
+  DEMO_REASONING,
+  DEMO_CARDS,
+  DEMO_INSIGHTS,
+  DEMO_OPPORTUNITIES,
+  DEMO_DESIGN_REVIEW,
+  DEMO_PRD,
+} from './demoData';
 
 const BLANK_FORM: FormData = {
   productName: '',
@@ -23,15 +37,41 @@ const BLANK_FORM: FormData = {
   documents: [],
 };
 
+const STEPS: { page: Page; label: string }[] = [
+  { page: 'input',      label: 'Input'        },
+  { page: 'simulation', label: 'Perspectives' },
+  { page: 'insights',   label: 'Insights'     },
+  { page: 'reasoning',  label: 'Reasoning'    },
+  { page: 'review',     label: 'Review'       },
+  { page: 'decision',   label: 'Decision'     },
+];
+
 export default function App() {
   const [page, setPage] = useState<Page>('landing');
   const [formData, setFormData] = useState<FormData>({ ...BLANK_FORM });
   const [cards, setCards] = useState<Card[]>([]);
   const [realCards, setRealCards] = useState<RealCard[]>([]);
   const [insights, setInsights] = useState<Insights | null>(null);
+  const [reasoningData, setReasoningData] = useState<ReasoningData | null>(null);
+  const [opportunitiesData, setOpportunitiesData] = useState<OpportunitiesData | null>(null);
+  const [designReviewData, setDesignReviewData] = useState<DesignReviewData | null>(null);
   const [prdData, setPrdData] = useState<PRDData | null>(null);
+  const [flowStarted, setFlowStarted] = useState(false);
 
-  // Restore shared data from URL hash
+  useEffect(() => {
+    if (!new URLSearchParams(window.location.search).has('demo')) return;
+    setFormData(prev => ({ ...prev, productName: DEMO_PRODUCT, productStage: 'unpublished' }));
+    setCards(DEMO_CARDS);
+    setInsights(DEMO_INSIGHTS);
+    setReasoningData(DEMO_REASONING);
+    setOpportunitiesData(DEMO_OPPORTUNITIES);
+    setDesignReviewData(DEMO_DESIGN_REVIEW);
+    setPrdData(DEMO_PRD);
+    setFlowStarted(true);
+    setPage('decision');
+    window.history.replaceState(null, '', window.location.pathname);
+  }, []);
+
   useEffect(() => {
     const hash = window.location.hash;
     if (hash.startsWith('#insights=')) {
@@ -40,17 +80,30 @@ export default function App() {
         if (data.insights && data.productName) {
           setInsights(data.insights);
           setFormData(prev => ({ ...prev, productName: data.productName }));
+          setFlowStarted(true);
           setPage('insights');
           window.history.replaceState(null, '', window.location.pathname);
         }
       } catch {}
-    } else if (hash.startsWith('#prd=')) {
+    } else if (hash.startsWith('#decisions=') || hash.startsWith('#prd=')) {
       try {
-        const data = decodeShare<{ prdData: PRDData; productName: string }>(hash.slice(5));
+        const payload = hash.startsWith('#decisions=') ? hash.slice(11) : hash.slice(5);
+        const data = decodeShare<{
+          prdData: PRDData;
+          designReviewData?: DesignReviewData;
+          uxReviewData?: DesignReviewData;
+          opportunitiesData?: OpportunitiesData;
+          productName: string;
+        }>(payload);
         if (data.prdData && data.productName) {
           setPrdData(data.prdData);
+          if (data.designReviewData || data.uxReviewData) {
+            setDesignReviewData(data.designReviewData || data.uxReviewData!);
+          }
+          if (data.opportunitiesData) setOpportunitiesData(data.opportunitiesData);
           setFormData(prev => ({ ...prev, productName: data.productName }));
-          setPage('prd');
+          setFlowStarted(true);
+          setPage('decision');
           window.history.replaceState(null, '', window.location.pathname);
         }
       } catch {}
@@ -62,25 +115,45 @@ export default function App() {
     setTimeout(() => setPage(p), 50);
   };
 
-  const STEPS: { page: Page; label: string; description: string }[] = [
-    { page: 'input',      label: 'Input',        description: 'Describe your product'         },
-    { page: 'simulation', label: 'Perspectives',  description: 'Simulate user reactions'       },
-    { page: 'insights',   label: 'Insights',      description: 'Analyze patterns & friction'   },
-    { page: 'prd',        label: 'Decision',      description: 'Recommend product decisions'   },
-  ];
-
   const stepIndex = STEPS.findIndex(s => s.page === page);
-  const currentStep = STEPS[stepIndex];
 
   const isReachable = (p: Page) =>
     p === 'input' ||
-    (p === 'simulation' && (cards.length > 0 || realCards.length > 0)) ||
-    (p === 'insights' && insights !== null) ||
-    (p === 'prd' && prdData !== null);
+    (p === 'simulation' && flowStarted) ||
+    (p === 'insights' && flowStarted && (cards.length > 0 || realCards.length > 0)) ||
+    (p === 'reasoning' && insights !== null) ||
+    (p === 'review' && reasoningData !== null) ||
+    (p === 'decision' && designReviewData !== null);
+
+  const resetDownstream = (from: Page) => {
+    if (from === 'input' || from === 'simulation' || from === 'insights') {
+      setReasoningData(null);
+      setOpportunitiesData(null);
+      setDesignReviewData(null);
+      setPrdData(null);
+    } else if (from === 'reasoning') {
+      setOpportunitiesData(null);
+      setDesignReviewData(null);
+      setPrdData(null);
+    } else if (from === 'review') {
+      setPrdData(null);
+    }
+  };
+
+  const resetAll = () => {
+    setFormData({ ...BLANK_FORM });
+    setCards([]);
+    setRealCards([]);
+    setInsights(null);
+    setReasoningData(null);
+    setOpportunitiesData(null);
+    setDesignReviewData(null);
+    setPrdData(null);
+    setFlowStarted(false);
+  };
 
   return (
     <div className="min-h-screen" style={{ background: '#FDFCF9' }}>
-      {/* Nav */}
       <nav
         className="sticky top-0 z-10"
         style={{
@@ -89,77 +162,68 @@ export default function App() {
         }}
       >
         {page === 'landing' ? (
-          /* Landing: just the logo */
           <div className="page-container flex items-center h-11">
             <button
               onClick={() => navigate('landing')}
-              className="text-xs font-semibold tracking-[0.12em] uppercase text-[#1D1D1F] transition-colors"
-              style={{ transition: 'color 0.24s cubic-bezier(0.4,0,0.6,1)' }}
+              className="text-xs font-semibold tracking-[0.12em] uppercase text-[#1D1D1F]"
             >
               User OS
             </button>
           </div>
         ) : (
-          /* Steps nav */
           <div className="page-container py-2">
             <div className="flex items-stretch">
-              {/* Logo */}
               <button
                 onClick={() => navigate('landing')}
-                className="text-xs font-semibold tracking-[0.12em] uppercase text-[#1D1D1F] pr-6 flex items-center"
+                className="text-xs font-semibold tracking-[0.12em] uppercase text-[#1D1D1F] pr-4 sm:pr-6 flex items-center shrink-0"
                 style={{ borderRight: '1px solid rgba(224, 217, 203, 0.5)' }}
               >
                 User OS
               </button>
 
-              {/* Steps — each takes equal flex width, with bar below label */}
-              <div className="flex flex-1 pl-4">
-                {STEPS.map((step, i) => {
-                  const isDone    = stepIndex > i;
-                  const isActive  = stepIndex === i;
-                  const reachable = isReachable(step.page);
-                  return (
-                    <button
-                      key={step.page}
-                      onClick={() => reachable && navigate(step.page)}
-                      className={`flex-1 flex flex-col gap-1.5 py-1 ${reachable ? 'cursor-pointer' : 'cursor-default'}`}
-                    >
-                      {/* Label row */}
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{
-                          background: isActive ? '#127A74' : isDone ? '#6E6E73' : '#A1A1A6',
-                        }} />
-                        <span
-                          className="text-[11px] font-medium"
-                          style={{
-                            color: isActive ? '#127A74' : isDone ? '#1D1D1F' : '#A1A1A6',
-                            transition: 'color 0.24s cubic-bezier(0.4,0,0.6,1)',
-                          }}
-                        >
-                          {step.label}
-                        </span>
-                      </div>
-                      {/* Bar — full width of this flex cell */}
-                      <div className="h-px w-full overflow-hidden" style={{ background: '#EDE9E0' }}>
-                        <div
-                          className="h-full transition-all duration-500"
-                          style={{
-                            width:      isDone || isActive ? '100%' : '0%',
-                            background: isActive ? '#127A74' : '#6E6E73',
-                            opacity:    isDone ? 0.4 : isActive ? 1 : 0,
-                          }}
-                        />
-                      </div>
-                    </button>
-                  );
-                })}
+              <div className="flex flex-1 pl-2 sm:pl-4 min-w-0 overflow-x-auto">
+                <div className="flex min-w-max flex-1 gap-0">
+                  {STEPS.map((step, i) => {
+                    const isDone = stepIndex > i;
+                    const isActive = stepIndex === i;
+                    const reachable = isReachable(step.page);
+                    return (
+                      <button
+                        key={step.page}
+                        onClick={() => reachable && navigate(step.page)}
+                        className={`flex flex-col gap-1.5 py-1 min-w-[68px] sm:min-w-0 sm:flex-1 px-1 sm:px-0 ${reachable ? 'cursor-pointer' : 'cursor-default'}`}
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{
+                            background: isActive ? '#127A74' : isDone ? '#6E6E73' : '#A1A1A6',
+                          }} />
+                          <span
+                            className="text-[10px] sm:text-[11px] font-medium truncate"
+                            style={{ color: isActive ? '#127A74' : isDone ? '#1D1D1F' : '#A1A1A6' }}
+                          >
+                            {step.label}
+                          </span>
+                        </div>
+                        <div className="h-px w-full overflow-hidden" style={{ background: '#EDE9E0' }}>
+                          <div
+                            className="h-full transition-all duration-500"
+                            style={{
+                              width: isDone || isActive ? '100%' : '0%',
+                              background: isActive ? '#127A74' : '#6E6E73',
+                              opacity: isDone ? 0.4 : isActive ? 1 : 0,
+                            }}
+                          />
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>
         )}
       </nav>
 
-      {/* Pages */}
       <div key={page} className="animate-fade-in">
         {page === 'landing' && (
           <LandingPage onStart={() => navigate('input')} />
@@ -168,36 +232,79 @@ export default function App() {
           <InputPage
             formData={formData}
             setFormData={setFormData}
-            onSubmit={() => { setCards([]); setRealCards([]); setInsights(null); setPrdData(null); navigate('simulation'); }}
+            onSubmit={() => {
+              setCards([]);
+              setRealCards([]);
+              setInsights(null);
+              setReasoningData(null);
+              setOpportunitiesData(null);
+              setDesignReviewData(null);
+              setPrdData(null);
+              setFlowStarted(true);
+              navigate('simulation');
+            }}
           />
         )}
-        {page === 'simulation' && (
+        {page === 'simulation' && flowStarted && (
           <SimulationPage
             formData={formData}
             cards={cards}
             setCards={setCards}
             realCards={realCards}
             setRealCards={setRealCards}
-            onNext={(cardsForAnalysis) => { setCards(cardsForAnalysis); navigate('insights'); }}
+            onNext={(cardsForAnalysis) => {
+              setCards(cardsForAnalysis);
+              navigate('insights');
+            }}
           />
         )}
-        {page === 'insights' && (
+        {page === 'insights' && flowStarted && (
           <InsightPage
             productName={formData.productName}
             cards={cards}
             insights={insights}
             setInsights={setInsights}
-            onNext={() => navigate('prd')}
+            onNext={(selectedInsights) => {
+              setInsights(selectedInsights);
+              resetDownstream('insights');
+              navigate('reasoning');
+            }}
           />
         )}
-        {page === 'prd' && (
-          <PRDPage
+        {page === 'reasoning' && insights && (
+          <ReasoningPage
             productName={formData.productName}
-            insights={insights!}
+            cards={cards}
+            insights={insights}
+            reasoningData={reasoningData}
+            setReasoningData={setReasoningData}
+            opportunitiesData={opportunitiesData}
+            setOpportunitiesData={setOpportunitiesData}
+            onNext={() => { resetDownstream('reasoning'); navigate('review'); }}
+          />
+        )}
+        {page === 'review' && insights && (
+          <DesignReviewPage
+            productName={formData.productName}
+            cards={cards}
+            insights={insights}
+            opportunitiesData={opportunitiesData}
+            setOpportunitiesData={setOpportunitiesData}
+            designReviewData={designReviewData}
+            setDesignReviewData={setDesignReviewData}
+            onNext={() => { resetDownstream('review'); navigate('decision'); }}
+          />
+        )}
+        {page === 'decision' && insights && designReviewData && (
+          <DecisionsPage
+            productName={formData.productName}
+            insights={insights}
+            opportunitiesData={opportunitiesData}
+            designReviewData={designReviewData}
             prdData={prdData}
             setPrdData={setPrdData}
             onGoLanding={() => navigate('landing')}
-            onNewProduct={() => { setFormData({ ...BLANK_FORM }); setCards([]); setRealCards([]); setInsights(null); setPrdData(null); navigate('input'); }}
+            onNewProduct={() => { resetAll(); navigate('input'); }}
           />
         )}
       </div>

@@ -1,1 +1,8 @@
-export type Page = 'landing' | 'input' | 'simulation' | 'insights' | 'prd';
+export type Page =
+  | 'landing'
+  | 'input'
+  | 'simulation'
+  | 'insights'
+  | 'reasoning'
+  | 'review'
+  | 'decision';
