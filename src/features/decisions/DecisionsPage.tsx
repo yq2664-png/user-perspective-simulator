@@ -11,12 +11,18 @@ interface Props {
   productName: string;
   insights: Insights;
   opportunitiesData: OpportunitiesData | null;
-  designReviewData: DesignReviewData;
+  designReviewData: DesignReviewData | null;
   prdData: PRDData | null;
   setPrdData: (d: PRDData) => void;
   onGoLanding: () => void;
   onNewProduct: () => void;
 }
+
+const EMPTY_REVIEW: DesignReviewData = {
+  title: '',
+  synthesis: '',
+  frameworks: [],
+};
 
 const PRIORITY_ORDER = ['Critical', 'High', 'Medium', 'Low'] as const;
 
@@ -132,11 +138,16 @@ export default function DecisionsPage({
       setStep(s);
     }, 2800);
     try {
-      const data = await getPrd(productName, insights, designReviewData, opportunitiesData ?? {
-        title: `${productName} — Design Opportunities`,
-        synthesis: '',
-        opportunities: [],
-      });
+      const data = await getPrd(
+        productName,
+        insights,
+        designReviewData ?? EMPTY_REVIEW,
+        opportunitiesData ?? {
+          title: `${productName} — Design Opportunities`,
+          synthesis: '',
+          opportunities: [],
+        },
+      );
       setPrdData(data);
     } catch (e: any) {
       setError(e.message || 'Something went wrong.');

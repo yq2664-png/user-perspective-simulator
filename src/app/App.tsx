@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { decodeShare } from '@/shared/lib/shareLink';
 import {
+  trackAnalysisDepthSelected,
   trackCtaClicked,
   trackFlowStarted,
   trackPageView,
   trackPipelineCompleted,
   trackStepCompleted,
 } from '@/shared/lib/analytics';
+import type { AnalysisDepth } from './analysisDepth';
+import { getNavSteps } from './analysisDepth';
 import type { Page } from './routes';
 import type { FormData, Card, Insights } from '@/shared/types';
 import type { RealCard } from '@/features/perspectives/types';
@@ -16,6 +19,7 @@ import type { DesignReviewData } from '@/features/design-review/types';
 import type { ReasoningData } from '@/features/reasoning/types';
 import LandingPage from '@/features/landing/LandingPage';
 import InputPage from '@/features/intake/InputPage';
+import AnalysisDepthPage from '@/features/analysis/AnalysisDepthPage';
 import SimulationPage from '@/features/perspectives/SimulationPage';
 import InsightPage from '@/features/insights/InsightPage';
 import ReasoningPage from '@/features/reasoning/ReasoningPage';
@@ -44,14 +48,8 @@ const BLANK_FORM: FormData = {
   documents: [],
 };
 
-const STEPS: { page: Page; label: string }[] = [
-  { page: 'input',      label: 'Input'        },
-  { page: 'simulation', label: 'Perspectives' },
-  { page: 'insights',   label: 'Insights'     },
-  { page: 'reasoning',  label: 'Reasoning'    },
-  { page: 'review',     label: 'Review'       },
-  { page: 'decision',   label: 'Decision'     },
-];
+const hasPerspectiveEvidence = (cards: Card[], realCards: RealCard[]) =>
+  cards.length > 0 || realCards.length > 0;
 
 export default function App() {
   const [page, setPage] = useState<Page>('landing');
@@ -64,6 +62,7 @@ export default function App() {
   const [designReviewData, setDesignReviewData] = useState<DesignReviewData | null>(null);
   const [prdData, setPrdData] = useState<PRDData | null>(null);
   const [flowStarted, setFlowStarted] = useState(false);
+  const [analysisDepth, setAnalysisDepth] = useState<AnalysisDepth | null>(null);
   const skipAnalytics = useRef(
     new URLSearchParams(window.location.search).has('demo'),
   );
@@ -93,6 +92,7 @@ export default function App() {
     setDesignReviewData(DEMO_DESIGN_REVIEW);
     setPrdData(DEMO_PRD);
     setFlowStarted(true);
+    setAnalysisDepth('deep');
     setPage('decision');
     window.history.replaceState(null, '', window.location.pathname);
   }, []);
@@ -106,6 +106,7 @@ export default function App() {
           setInsights(data.insights);
           setFormData(prev => ({ ...prev, productName: data.productName }));
           setFlowStarted(true);
+          setAnalysisDepth('standard');
           setPage('insights');
           window.history.replaceState(null, '', window.location.pathname);
         }
@@ -128,6 +129,7 @@ export default function App() {
           if (data.opportunitiesData) setOpportunitiesData(data.opportunitiesData);
           setFormData(prev => ({ ...prev, productName: data.productName }));
           setFlowStarted(true);
+          setAnalysisDepth(data.designReviewData || data.uxReviewData ? 'deep' : 'standard');
           setPage('decision');
           window.history.replaceState(null, '', window.location.pathname);
         }
@@ -140,15 +142,24 @@ export default function App() {
     setTimeout(() => setPage(p), 50);
   };
 
-  const stepIndex = STEPS.findIndex(s => s.page === page);
+  const steps = getNavSteps(analysisDepth);
+  const navPage: Page = page === 'analysis-depth' ? 'simulation' : page;
+  const stepIndex = steps.findIndex(s => s.page === navPage);
 
-  const isReachable = (p: Page) =>
-    p === 'input' ||
-    (p === 'simulation' && flowStarted) ||
-    (p === 'insights' && flowStarted && (cards.length > 0 || realCards.length > 0)) ||
-    (p === 'reasoning' && insights !== null) ||
-    (p === 'review' && reasoningData !== null) ||
-    (p === 'decision' && designReviewData !== null);
+  const isReachable = (p: Page) => {
+    if (p === 'input') return true;
+    if (p === 'simulation') return flowStarted;
+    if (p === 'insights') {
+      return flowStarted && analysisDepth !== null && hasPerspectiveEvidence(cards, realCards);
+    }
+    if (p === 'reasoning') return analysisDepth === 'deep' && insights !== null;
+    if (p === 'review') return analysisDepth === 'deep' && reasoningData !== null;
+    if (p === 'decision') {
+      if (analysisDepth === 'standard') return insights !== null;
+      if (analysisDepth === 'deep') return designReviewData !== null;
+    }
+    return false;
+  };
 
   const resetDownstream = (from: Page) => {
     if (from === 'input' || from === 'simulation' || from === 'insights') {
@@ -175,6 +186,7 @@ export default function App() {
     setDesignReviewData(null);
     setPrdData(null);
     setFlowStarted(false);
+    setAnalysisDepth(null);
   };
 
   return (
@@ -186,10 +198,10 @@ export default function App() {
           borderBottom: '1px solid rgba(224, 217, 203, 0.35)',
         }}
       >
-        {page === 'landing' ? (
+        {page === 'landing' || page === 'analysis-depth' ? (
           <div className="page-container flex items-center h-11">
             <button
-              onClick={() => navigate('landing')}
+              onClick={() => navigate(page === 'landing' ? 'landing' : 'simulation')}
               className="text-xs font-semibold tracking-[0.12em] uppercase text-[#1D1D1F]"
             >
               User OS
@@ -208,15 +220,16 @@ export default function App() {
 
               <div className="flex flex-1 pl-2 sm:pl-4 min-w-0 overflow-x-auto">
                 <div className="flex min-w-max flex-1 gap-0">
-                  {STEPS.map((step, i) => {
+                  {steps.map((step, i) => {
                     const isDone = stepIndex > i;
                     const isActive = stepIndex === i;
-                    const reachable = isReachable(step.page);
+                    const clickable = isDone && isReachable(step.page);
                     return (
                       <button
                         key={step.page}
-                        onClick={() => reachable && navigate(step.page)}
-                        className={`flex flex-col gap-1.5 py-1 min-w-[68px] sm:min-w-0 sm:flex-1 px-1 sm:px-0 ${reachable ? 'cursor-pointer' : 'cursor-default'}`}
+                        onClick={() => clickable && navigate(step.page)}
+                        disabled={!clickable}
+                        className={`flex flex-col gap-1.5 py-1 min-w-[68px] sm:min-w-0 sm:flex-1 px-1 sm:px-0 ${clickable ? 'cursor-pointer' : 'cursor-default'}`}
                       >
                         <div className="flex items-center gap-1.5">
                           <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{
@@ -270,6 +283,7 @@ export default function App() {
               setPrdData(null);
               pipelineCompletedTracked.current = false;
               setFlowStarted(true);
+              setAnalysisDepth(null);
               if (!skipAnalytics.current) {
                 trackFlowStarted({ product_stage: formData.productStage });
               }
@@ -286,12 +300,31 @@ export default function App() {
             setRealCards={setRealCards}
             onNext={(cardsForAnalysis) => {
               setCards(cardsForAnalysis);
+              setAnalysisDepth(null);
+              setInsights(null);
+              resetDownstream('simulation');
               if (!skipAnalytics.current) trackStepCompleted('simulation');
+              navigate('analysis-depth');
+            }}
+          />
+        )}
+        {page === 'analysis-depth' && flowStarted && hasPerspectiveEvidence(cards, realCards) && (
+          <AnalysisDepthPage
+            productName={formData.productName || 'Your product'}
+            onContinue={(depth) => {
+              setAnalysisDepth(depth);
+              if (depth === 'standard') {
+                setReasoningData(null);
+                setOpportunitiesData(null);
+                setDesignReviewData(null);
+                setPrdData(null);
+              }
+              if (!skipAnalytics.current) trackAnalysisDepthSelected(depth);
               navigate('insights');
             }}
           />
         )}
-        {page === 'insights' && flowStarted && (
+        {page === 'insights' && flowStarted && analysisDepth && hasPerspectiveEvidence(cards, realCards) && (
           <InsightPage
             productName={formData.productName}
             cards={cards}
@@ -301,11 +334,15 @@ export default function App() {
               setInsights(selectedInsights);
               resetDownstream('insights');
               if (!skipAnalytics.current) trackStepCompleted('insights');
-              navigate('reasoning');
+              if (analysisDepth === 'standard') {
+                navigate('decision');
+              } else {
+                navigate('reasoning');
+              }
             }}
           />
         )}
-        {page === 'reasoning' && insights && (
+        {page === 'reasoning' && analysisDepth === 'deep' && insights && (
           <ReasoningPage
             productName={formData.productName}
             cards={cards}
@@ -321,7 +358,7 @@ export default function App() {
             }}
           />
         )}
-        {page === 'review' && insights && (
+        {page === 'review' && analysisDepth === 'deep' && insights && (
           <DesignReviewPage
             productName={formData.productName}
             cards={cards}
@@ -337,7 +374,9 @@ export default function App() {
             }}
           />
         )}
-        {page === 'decision' && insights && designReviewData && (
+        {page === 'decision' && insights && analysisDepth && (
+          analysisDepth === 'standard' || designReviewData
+        ) && (
           <DecisionsPage
             productName={formData.productName}
             insights={insights}
