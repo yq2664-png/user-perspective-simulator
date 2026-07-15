@@ -40,8 +40,6 @@ export default function Hero({ onStart }: Props) {
       </div>
 
       <p className="hero-subheadline">
-        Paste in your product description.
-        <br />
         <span className="hero-subheadline__detail">
           Explore AI-generated user perspectives and behavioral insights that reveal hidden motivations, reactions, and design opportunities.
         </span>

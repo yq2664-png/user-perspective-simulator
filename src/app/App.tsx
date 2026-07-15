@@ -1,5 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { decodeShare } from '@/shared/lib/shareLink';
+import {
+  trackCtaClicked,
+  trackFlowStarted,
+  trackPageView,
+  trackPipelineCompleted,
+  trackStepCompleted,
+} from '@/shared/lib/analytics';
 import type { Page } from './routes';
 import type { FormData, Card, Insights } from '@/shared/types';
 import type { RealCard } from '@/features/perspectives/types';
@@ -57,9 +64,27 @@ export default function App() {
   const [designReviewData, setDesignReviewData] = useState<DesignReviewData | null>(null);
   const [prdData, setPrdData] = useState<PRDData | null>(null);
   const [flowStarted, setFlowStarted] = useState(false);
+  const skipAnalytics = useRef(
+    new URLSearchParams(window.location.search).has('demo'),
+  );
+  const pipelineCompletedTracked = useRef(false);
+
+  useEffect(() => {
+    if (skipAnalytics.current) return;
+    trackPageView(page);
+  }, [page]);
+
+  useEffect(() => {
+    if (skipAnalytics.current || !prdData || page !== 'decision' || pipelineCompletedTracked.current) {
+      return;
+    }
+    pipelineCompletedTracked.current = true;
+    trackPipelineCompleted();
+  }, [prdData, page]);
 
   useEffect(() => {
     if (!new URLSearchParams(window.location.search).has('demo')) return;
+    skipAnalytics.current = true;
     setFormData(prev => ({ ...prev, productName: DEMO_PRODUCT, productStage: 'unpublished' }));
     setCards(DEMO_CARDS);
     setInsights(DEMO_INSIGHTS);
@@ -226,7 +251,10 @@ export default function App() {
 
       <div key={page} className="animate-fade-in">
         {page === 'landing' && (
-          <LandingPage onStart={() => navigate('input')} />
+          <LandingPage onStart={() => {
+            trackCtaClicked('get_started');
+            navigate('input');
+          }} />
         )}
         {page === 'input' && (
           <InputPage
@@ -240,7 +268,11 @@ export default function App() {
               setOpportunitiesData(null);
               setDesignReviewData(null);
               setPrdData(null);
+              pipelineCompletedTracked.current = false;
               setFlowStarted(true);
+              if (!skipAnalytics.current) {
+                trackFlowStarted({ product_stage: formData.productStage });
+              }
               navigate('simulation');
             }}
           />
@@ -254,6 +286,7 @@ export default function App() {
             setRealCards={setRealCards}
             onNext={(cardsForAnalysis) => {
               setCards(cardsForAnalysis);
+              if (!skipAnalytics.current) trackStepCompleted('simulation');
               navigate('insights');
             }}
           />
@@ -267,6 +300,7 @@ export default function App() {
             onNext={(selectedInsights) => {
               setInsights(selectedInsights);
               resetDownstream('insights');
+              if (!skipAnalytics.current) trackStepCompleted('insights');
               navigate('reasoning');
             }}
           />
@@ -280,7 +314,11 @@ export default function App() {
             setReasoningData={setReasoningData}
             opportunitiesData={opportunitiesData}
             setOpportunitiesData={setOpportunitiesData}
-            onNext={() => { resetDownstream('reasoning'); navigate('review'); }}
+            onNext={() => {
+              resetDownstream('reasoning');
+              if (!skipAnalytics.current) trackStepCompleted('reasoning');
+              navigate('review');
+            }}
           />
         )}
         {page === 'review' && insights && (
@@ -292,7 +330,11 @@ export default function App() {
             setOpportunitiesData={setOpportunitiesData}
             designReviewData={designReviewData}
             setDesignReviewData={setDesignReviewData}
-            onNext={() => { resetDownstream('review'); navigate('decision'); }}
+            onNext={() => {
+              resetDownstream('review');
+              if (!skipAnalytics.current) trackStepCompleted('review');
+              navigate('decision');
+            }}
           />
         )}
         {page === 'decision' && insights && designReviewData && (

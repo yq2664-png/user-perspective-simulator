@@ -7,72 +7,62 @@ interface Props {
 const STEPS = [
   {
     num: '01',
-    title: 'Product Input',
-    question: 'What product did you build?',
-    body: 'Describe your product type, core experience, and optionally upload supporting materials.',
+    title: 'Input',
+    question: 'Describe your product',
+    body: 'Provide your product name, website, and supporting materials.',
   },
   {
     num: '02',
-    title: 'User Perspectives',
-    question: 'How would users see it?',
-    body: 'AI generates diverse user perspectives that reveal how different people might perceive and respond to your product.',
+    title: 'Perspectives',
+    question: 'Bring every user voice together',
+    body: 'Combine real user feedback with AI-simulated perspectives to build a richer understanding of your users.',
   },
   {
     num: '03',
-    title: 'Behavioral Insights',
-    question: 'Why would users think that way?',
-    body: 'Uncover hidden motivations, unmet needs, and friction behind user behavior.',
+    title: 'Insights',
+    question: 'Discover hidden needs',
+    body: 'Reveal motivations, trust issues, unmet needs, and decision barriers behind user behavior.',
   },
   {
     num: '04',
     title: 'Reasoning',
-    question: 'How does the evidence connect?',
-    body: 'Trace how user perspectives connect to behavioral patterns — the reasoning bridge before design evaluation.',
+    question: 'Connect the dots',
+    body: 'AI links research evidence, behavioral patterns, and UX knowledge to explain why problems emerge.',
   },
   {
     num: '05',
-    title: 'AI Design Review',
-    question: 'Why does your design cause these problems?',
-    body: 'Evaluate evidence against Nielsen, WCAG, Apple HIG, Material, Cognitive Load, and Trust patterns.',
+    title: 'Review',
+    question: 'Review your design',
+    body: 'Evaluate the experience, identify usability issues, and recommend improvements backed by research evidence.',
   },
   {
     num: '06',
-    title: 'Product Decisions',
-    question: 'How should you change it?',
-    body: 'Generate evidence-backed requirements — every decision traces back to user proof.',
+    title: 'Decisions',
+    question: 'Turn insights into action',
+    body: 'Generate prioritized product decisions and requirements grounded in user research.',
   },
 ];
 
 const FEATURES = [
   {
-    label: 'Product Input',
-    question: 'What product did you build?',
-    title: 'Start with what you built',
-    body: 'Describe the product before simulating how anyone might react to it.',
+    label: 'Perspectives',
+    title: "See through your users' eyes",
+    body: 'Combine real user feedback and AI-generated perspectives to understand how different users experience your product.',
   },
   {
-    label: 'User Perspectives',
-    question: 'How would users see it?',
-    title: 'See your product through different eyes',
-    body: 'Explore how different users might think, feel, and respond before launching.',
+    label: 'Insights',
+    title: 'Reveal hidden patterns',
+    body: 'Discover motivations, unmet needs, trust issues, and decision barriers behind user behavior.',
   },
   {
-    label: 'Behavioral Insights',
-    question: 'Why would users think that way?',
-    title: 'Understand why users behave the way they do',
-    body: 'Reveal hidden motivations, unmet needs, and friction behind user behavior.',
+    label: 'Recommendations',
+    title: 'Improve with confidence',
+    body: 'Receive evidence-backed design recommendations that explain what to improve and why.',
   },
   {
-    label: 'AI Design Review',
-    question: 'Why does your design cause these problems?',
-    title: 'Six frameworks, one evidence chain',
-    body: 'Nielsen · WCAG · Apple HIG · Material · Cognitive Load · Trust — only where evidence applies.',
-  },
-  {
-    label: 'Export',
-    question: 'How do you hand this off to the team?',
-    title: 'Hand off to your team',
-    body: 'Share links or export PDFs — every decision stays traceable to its evidence chain.',
+    label: 'Decisions',
+    title: 'Turn insights into action',
+    body: 'Generate prioritized product decisions and requirements grounded in user research.',
   },
 ];
 
@@ -94,9 +84,9 @@ export default function LandingPage({ onStart }: Props) {
                 >
                   {step.num}
                 </span>
-                <p className="text-sm font-semibold text-[#1D1D1F] mb-1">{step.title}</p>
-                <p className="text-xs mb-3" style={{ color: '#127A74' }}>{step.question}</p>
-                <p className="text-sm text-[#6E6E73] leading-relaxed">{step.body}</p>
+                <p className="mb-2 text-base font-semibold leading-snug text-[#1D1D1F] sm:text-lg">{step.title}</p>
+                <p className="mb-3 text-sm leading-snug" style={{ color: '#127A74' }}>{step.question}</p>
+                <p className="text-xs leading-relaxed text-[#6E6E73]">{step.body}</p>
               </div>
             ))}
           </div>
@@ -105,13 +95,16 @@ export default function LandingPage({ onStart }: Props) {
 
       <section className="page-container pt-6 pb-10 sm:pt-7 sm:pb-12">
         <p className="section-title">What you get</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:items-stretch">
           {FEATURES.map((f) => (
-            <div key={f.label} className="p-8 rounded-2xl" style={{ background: '#F7F5EF' }}>
-              <span className="label-tag block mb-2">{f.label}</span>
-              <p className="text-xs mb-4" style={{ color: '#127A74' }}>{f.question}</p>
-              <p className="text-xl font-semibold text-[#1D1D1F] mb-3 leading-snug">{f.title}</p>
-              <p className="text-sm text-[#6E6E73] leading-relaxed">{f.body}</p>
+            <div
+              key={f.label}
+              className="flex h-full min-h-[220px] flex-col rounded-2xl p-6 sm:p-7"
+              style={{ background: '#F7F5EF' }}
+            >
+              <span className="mb-2 block text-base font-semibold leading-snug sm:text-lg text-[#1D1D1F]">{f.label}</span>
+              <p className="mb-3 text-sm leading-snug" style={{ color: '#127A74' }}>{f.title}</p>
+              <p className="flex-1 text-xs leading-relaxed text-[#6E6E73]">{f.body}</p>
             </div>
           ))}
         </div>
