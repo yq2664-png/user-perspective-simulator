@@ -201,13 +201,30 @@ export default function InputPage({ formData, setFormData, onSubmit }: Props) {
 
           <div className="space-y-4">
 
+            {/* Skill hint — unpublished only, before product name */}
+            {stage === 'unpublished' && (
+              <p className="text-xs leading-relaxed" style={{ color: '#8E8E93' }}>
+                For local or code-based projects, we recommend using the{' '}
+                <a
+                  href={SKILL_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline underline-offset-2"
+                  style={{ color: '#127A74' }}
+                >
+                  skill
+                </a>
+                {' '}— a Markdown file you download from GitHub and install into your LLM to generate context automatically.
+              </p>
+            )}
+
             {/* Product Name */}
             {stage !== 'web' && (
               <div>
                 <label className="label-tag block mb-2">Product Name</label>
                 <input
                   type="text"
-                  className="w-full text-[#1D1D1F] outline-none rounded-xl px-4 py-3"
+                  className="input-page-field w-full text-[#1D1D1F] outline-none rounded-xl px-4 py-3"
                   style={{ fontSize: '17px', lineHeight: '1.5', background: '#FBFAF6', border: 'none' }}
                   placeholder="e.g. Notion, Linear, Figma"
                   value={formData.productName}
@@ -222,7 +239,7 @@ export default function InputPage({ formData, setFormData, onSubmit }: Props) {
                 <label className="label-tag block mb-2">Website URL</label>
                 <input
                   type="url"
-                  className="w-full text-[#1D1D1F] outline-none rounded-xl px-4 py-3"
+                  className="input-page-field w-full text-[#1D1D1F] outline-none rounded-xl px-4 py-3"
                   style={{ fontSize: '17px', lineHeight: '1.5', background: '#FBFAF6', border: 'none' }}
                   placeholder="https://yourproduct.com"
                   value={formData.webLink}
@@ -241,10 +258,10 @@ export default function InputPage({ formData, setFormData, onSubmit }: Props) {
                   className="w-full py-5 text-center rounded-xl transition-colors"
                   style={{ background: '#FBFAF6', border: 'none' }}
                 >
-                  <svg width="16" height="16" viewBox="0 0 20 20" fill="none" className="mx-auto mb-1" style={{ color: '#A1A1A6' }}>
+                  <svg width="16" height="16" viewBox="0 0 20 20" fill="none" className="input-page-hint mx-auto mb-1">
                     <path d="M10 3v10M6 7l4-4 4 4M3 14v1a2 2 0 002 2h10a2 2 0 002-2v-1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
-                  <span className="text-sm" style={{ color: '#6E6E73' }}>Click to upload</span>
+                  <span className="input-page-hint text-sm">Click to upload</span>
                 </button>
                 <input ref={docRef} type="file" multiple className="hidden"
                   onChange={e => {
@@ -264,21 +281,6 @@ export default function InputPage({ formData, setFormData, onSubmit }: Props) {
                     ))}
                   </div>
                 )}
-
-                {/* Skill recommendation hint */}
-                <p className="text-xs leading-relaxed mt-3" style={{ color: '#8E8E93' }}>
-                  For local or code-based projects, we recommend using the{' '}
-                  <a
-                    href={SKILL_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline underline-offset-2"
-                    style={{ color: '#127A74' }}
-                  >
-                    skill
-                  </a>
-                  {' '}— a Markdown file you download from GitHub and install into your LLM to generate context automatically.
-                </p>
               </div>
             )}
 
@@ -286,12 +288,12 @@ export default function InputPage({ formData, setFormData, onSubmit }: Props) {
             <div>
               <label className="label-tag block mb-2">
                 Context
-                {stage === 'unpublished'
-                  ? <span className="ml-1 normal-case font-normal" style={{ color: '#A1A1A6' }}>or design documents above</span>
-                  : <span className="ml-1 normal-case font-normal" style={{ color: '#A1A1A6' }}>optional</span>}
+                {stage !== 'unpublished' && (
+                  <span className="ml-1 normal-case font-normal" style={{ color: '#A1A1A6' }}>optional</span>
+                )}
               </label>
               <textarea
-                className="w-full text-[#1D1D1F] outline-none rounded-xl px-4 py-3 resize-none"
+                className="input-page-field w-full text-[#1D1D1F] outline-none rounded-xl px-4 py-3 resize-none"
                 style={{ fontSize: '17px', lineHeight: '1.6', background: '#FBFAF6', border: 'none' }}
                 rows={4}
                 placeholder={

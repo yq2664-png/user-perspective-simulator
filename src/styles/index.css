@@ -113,6 +113,14 @@
   .input-field:focus { border-color: #127A74; }
   .input-field::placeholder { color: #6E6E73; }
 
+  .input-page-field::placeholder {
+    color: #C7C7CC;
+  }
+
+  .input-page-hint {
+    color: #C7C7CC;
+  }
+
   .thinking-dot {
     @apply w-1.5 h-1.5 rounded-full;
     background: #6E6E73;
