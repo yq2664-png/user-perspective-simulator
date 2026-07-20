@@ -24,5 +24,6 @@ export function getNavSteps(depth: AnalysisDepth | null): { page: import('./rout
   return [
     { page: 'input', label: 'Input' },
     { page: 'simulation', label: 'Perspectives' },
+    { page: 'insights', label: 'Insights' },
   ];
 }

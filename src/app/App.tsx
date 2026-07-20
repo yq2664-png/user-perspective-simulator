@@ -106,7 +106,6 @@ export default function App() {
           setInsights(data.insights);
           setFormData(prev => ({ ...prev, productName: data.productName }));
           setFlowStarted(true);
-          setAnalysisDepth('standard');
           setPage('insights');
           window.history.replaceState(null, '', window.location.pathname);
         }
@@ -143,14 +142,16 @@ export default function App() {
   };
 
   const steps = getNavSteps(analysisDepth);
-  const navPage: Page = page === 'analysis-depth' ? 'simulation' : page;
-  const stepIndex = steps.findIndex(s => s.page === navPage);
+  const stepIndex =
+    page === 'analysis-depth'
+      ? steps.findIndex(s => s.page === 'insights') + 1
+      : steps.findIndex(s => s.page === page);
 
   const isReachable = (p: Page) => {
     if (p === 'input') return true;
     if (p === 'simulation') return flowStarted;
     if (p === 'insights') {
-      return flowStarted && analysisDepth !== null && hasPerspectiveEvidence(cards, realCards);
+      return flowStarted && hasPerspectiveEvidence(cards, realCards);
     }
     if (p === 'reasoning') return analysisDepth === 'deep' && insights !== null;
     if (p === 'review') return analysisDepth === 'deep' && reasoningData !== null;
@@ -198,7 +199,7 @@ export default function App() {
           borderBottom: '1px solid rgba(224, 217, 203, 0.35)',
         }}
       >
-        {page === 'landing' || page === 'analysis-depth' ? (
+        {page === 'landing' ? (
           <div className="page-container flex items-center h-11">
             <button
               onClick={() => navigate(page === 'landing' ? 'landing' : 'simulation')}
@@ -304,11 +305,25 @@ export default function App() {
               setInsights(null);
               resetDownstream('simulation');
               if (!skipAnalytics.current) trackStepCompleted('simulation');
+              navigate('insights');
+            }}
+          />
+        )}
+        {page === 'insights' && flowStarted && hasPerspectiveEvidence(cards, realCards) && (
+          <InsightPage
+            productName={formData.productName}
+            cards={cards}
+            insights={insights}
+            setInsights={setInsights}
+            onNext={(selectedInsights) => {
+              setInsights(selectedInsights);
+              resetDownstream('insights');
+              if (!skipAnalytics.current) trackStepCompleted('insights');
               navigate('analysis-depth');
             }}
           />
         )}
-        {page === 'analysis-depth' && flowStarted && hasPerspectiveEvidence(cards, realCards) && (
+        {page === 'analysis-depth' && flowStarted && hasPerspectiveEvidence(cards, realCards) && insights && (
           <AnalysisDepthPage
             productName={formData.productName || 'Your product'}
             onContinue={(depth) => {
@@ -320,25 +335,7 @@ export default function App() {
                 setPrdData(null);
               }
               if (!skipAnalytics.current) trackAnalysisDepthSelected(depth);
-              navigate('insights');
-            }}
-          />
-        )}
-        {page === 'insights' && flowStarted && analysisDepth && hasPerspectiveEvidence(cards, realCards) && (
-          <InsightPage
-            productName={formData.productName}
-            cards={cards}
-            insights={insights}
-            setInsights={setInsights}
-            onNext={(selectedInsights) => {
-              setInsights(selectedInsights);
-              resetDownstream('insights');
-              if (!skipAnalytics.current) trackStepCompleted('insights');
-              if (analysisDepth === 'standard') {
-                navigate('decision');
-              } else {
-                navigate('reasoning');
-              }
+              navigate(depth === 'standard' ? 'decision' : 'reasoning');
             }}
           />
         )}

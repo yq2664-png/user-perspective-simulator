@@ -83,7 +83,7 @@ export default function AnalysisDepthPage({ productName, onContinue }: Props) {
           Choose analysis depth
         </h1>
         <p className="mt-3 text-sm leading-relaxed" style={{ color: '#6E6E73' }}>
-          Both paths include behavioral insights from your perspectives. Choose how deep you want to go.
+          Your insights are ready. Choose how deep you want to go next.
         </p>
       </div>
 
@@ -93,14 +93,14 @@ export default function AnalysisDepthPage({ productName, onContinue }: Props) {
           onSelect={() => setDepth('standard')}
           title="Standard Analysis"
           subtitle="Turn insights into product decisions."
-          workflow={['Perspectives', 'Insights', 'Product Decisions']}
+          workflow={['Product Decisions']}
         />
         <ChoiceOption
           selected={depth === 'deep'}
           onSelect={() => setDepth('deep')}
           title="Deep Analysis"
           subtitle="Continue into design reasoning and review before deciding."
-          workflow={['Perspectives', 'Insights', 'Reasoning', 'Review', 'Product Decisions']}
+          workflow={['Reasoning', 'Review', 'Product Decisions']}
         />
       </div>
 
