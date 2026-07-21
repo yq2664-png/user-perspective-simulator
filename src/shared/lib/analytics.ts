@@ -8,10 +8,8 @@ const STEP_LABELS: Record<Page, string> = {
   landing: 'Landing',
   input: 'Input',
   simulation: 'Perspectives',
-  'analysis-depth': 'Analysis Depth',
   insights: 'Insights',
   reasoning: 'Reasoning',
-  review: 'Review',
   decision: 'Decisions',
 };
 
@@ -20,7 +18,6 @@ const PIPELINE_STEPS: Page[] = [
   'simulation',
   'insights',
   'reasoning',
-  'review',
   'decision',
 ];
 
@@ -83,14 +80,10 @@ export function trackStepCompleted(step: Page) {
   });
 }
 
-export function trackAnalysisDepthSelected(depth: 'standard' | 'deep') {
-  capture('analysis_depth_selected', { depth });
-}
-
 export function trackPipelineCompleted() {
   capture('pipeline_completed', {
     step: 'decision',
     step_label: STEP_LABELS.decision,
-    step_index: 6,
+    step_index: 5,
   });
 }

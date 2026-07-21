@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Card, Insights, InsightItem, ImpactLevel } from '@/shared/types';
+import type { UxExpertReviewData } from '@/features/perspectives/types';
 import { encodeShare } from '@/shared/lib/shareLink';
 import { getInsights } from './api';
 
 interface Props {
   productName: string;
   cards: Card[];
+  uxExpertReview?: UxExpertReviewData | null;
   insights: Insights | null;
   setInsights: (i: Insights) => void;
   onNext: (selectedInsights: Insights) => void;
@@ -190,7 +192,7 @@ function ImpactGroup({
   );
 }
 
-export default function InsightPage({ productName, cards, insights, setInsights, onNext }: Props) {
+export default function InsightPage({ productName, cards, uxExpertReview, insights, setInsights, onNext }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
@@ -223,7 +225,7 @@ export default function InsightPage({ productName, cards, insights, setInsights,
       setInsightStep(step);
     }, 2800);
     try {
-      const data = await getInsights(cards, productName);
+      const data = await getInsights(cards, productName, uxExpertReview);
       setInsights(data);
     } catch (e: any) {
       setError(e.message || 'Something went wrong.');

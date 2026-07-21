@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { encodeShare } from '@/shared/lib/shareLink';
 import type { Insights } from '@/shared/types';
 import type { OpportunitiesData } from '@/features/opportunities/types';
-import type { DesignReviewData } from '@/features/design-review/types';
+import type { UxExpertReviewData } from '@/features/perspectives/types';
+import type { ReasoningData } from '@/features/reasoning/types';
 import { ReasoningChain } from '@/features/ux-review/components/ReasoningChain';
 import type { PRDData, PRDSection } from './types';
 import { getPrd } from './api';
@@ -10,26 +11,21 @@ import { getPrd } from './api';
 interface Props {
   productName: string;
   insights: Insights;
+  uxExpertReview: UxExpertReviewData | null;
+  reasoningData: ReasoningData | null;
   opportunitiesData: OpportunitiesData | null;
-  designReviewData: DesignReviewData | null;
   prdData: PRDData | null;
   setPrdData: (d: PRDData) => void;
   onGoLanding: () => void;
   onNewProduct: () => void;
 }
 
-const EMPTY_REVIEW: DesignReviewData = {
-  title: '',
-  synthesis: '',
-  frameworks: [],
-};
-
 const PRIORITY_ORDER = ['Critical', 'High', 'Medium', 'Low'] as const;
 
 const DECISION_STEPS = [
-  'Following the evidence chains forward',
-  'Connecting opportunities to framework findings',
-  'Grounding each decision in user proof',
+  'Following insights forward',
+  'Connecting reasoning threads',
+  'Grounding decisions in UX findings',
   'Defining how success would be measured',
 ];
 
@@ -39,7 +35,7 @@ function DecisionThread({ section, index }: { section: PRDSection; index: number
   const reasoningSteps = [
     { label: 'User evidence', content: section.userEvidence },
     { label: 'Behavioral insight', content: section.behavioralInsight, emphasis: true },
-    { label: 'Design principle', content: section.relatedHeuristic },
+    { label: 'UX principle', content: section.relatedHeuristic },
     { label: 'Product decision', content: section.requirement, emphasis: true },
   ];
 
@@ -108,8 +104,9 @@ function DecisionThread({ section, index }: { section: PRDSection; index: number
 export default function DecisionsPage({
   productName,
   insights,
+  uxExpertReview,
+  reasoningData,
   opportunitiesData,
-  designReviewData,
   prdData,
   setPrdData,
   onGoLanding,
@@ -141,12 +138,13 @@ export default function DecisionsPage({
       const data = await getPrd(
         productName,
         insights,
-        designReviewData ?? EMPTY_REVIEW,
+        uxExpertReview,
         opportunitiesData ?? {
           title: `${productName} — Design Opportunities`,
           synthesis: '',
           opportunities: [],
         },
+        reasoningData,
       );
       setPrdData(data);
     } catch (e: any) {
@@ -159,7 +157,7 @@ export default function DecisionsPage({
 
   function copyShareLink() {
     if (!prdData) return;
-    const payload = encodeShare({ prdData, designReviewData, opportunitiesData, productName });
+    const payload = encodeShare({ prdData, uxExpertReview, opportunitiesData, productName });
     const url = `${window.location.origin}/#decisions=${payload}`;
     navigator.clipboard.writeText(url).then(() => {
       setCopied(true);

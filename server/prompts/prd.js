@@ -1,22 +1,30 @@
-export function buildPRDPrompt(productName, insights, designReview, opportunities) {
-  const reviewSection = designReview?.frameworks?.length
-    ? `\n\nAI Design Review (multi-framework):\n${JSON.stringify(designReview, null, 2)}`
+export function buildPRDPrompt(productName, insights, uxExpertReview, opportunities, reasoning) {
+  const reviewSection = uxExpertReview?.findings?.length
+    ? `\n\nUX Expert Perspective findings:\n${JSON.stringify(uxExpertReview.findings, null, 2)}`
     : '';
   const opportunitiesSection = opportunities?.opportunities?.length
     ? `\n\nDesign Opportunities:\n${JSON.stringify(opportunities, null, 2)}`
     : '';
+  const reasoningSection = reasoning?.threads?.length
+    ? `\n\nReasoning threads (User Evidence + Behavior Patterns + UX Findings):\n${JSON.stringify(reasoning, null, 2)}`
+    : '';
 
-  return `You are a principal product strategist translating behavioral research into evidence-backed product decisions for ${productName}.
+  return `You are a principal product strategist translating research into evidence-backed product decisions for ${productName}.
 
-This is NOT a speculative feature brainstorm. Every requirement must trace back to real user evidence from the research below.
+Generate the PRD / product decisions based on:
+1. Insights
+2. Reasoning (user evidence + behavior patterns + UX findings)
+3. UX Expert Perspective findings
+
+This is NOT a speculative feature brainstorm. Every requirement must trace back to evidence below.
 
 Research insights:
-${JSON.stringify(insights, null, 2)}${opportunitiesSection}${reviewSection}
+${JSON.stringify(insights, null, 2)}${reasoningSection}${opportunitiesSection}${reviewSection}
 
 Generate product decisions ONLY from the evidence above. Do NOT invent problems not supported by the research.
 
 Every decision must trace this chain:
-User Evidence → Behavioral Insight → Design Framework Principle → Product Requirement
+User Evidence → Behavioral Insight → UX Principle → Product Requirement
 
 Return ONLY valid JSON:
 {
@@ -35,7 +43,7 @@ Return ONLY valid JSON:
       "successMetric": "Specific, measurable outcome that signals the behavior has changed",
       "userEvidence": "Direct quote or observable behavior from user perspectives that supports this decision",
       "behavioralInsight": "The exact insight title or finding this decision addresses",
-      "relatedHeuristic": "The design framework principle this decision addresses (Nielsen, WCAG, HIG, Material, Cognitive Load, or Trust pattern)"
+      "relatedHeuristic": "UX principle name from UX Expert Perspective (e.g. Recognition Rather Than Recall) — no Nielsen numbers"
     }
   ]
 }
@@ -47,7 +55,7 @@ Generate 5-6 sections. Rules:
 - effort: "High" | "Medium" | "Low"
 - userEvidence MUST cite specific user behavior — never invent
 - behavioralInsight MUST reference an actual insight title
-- relatedHeuristic MUST reference an actual principle from the design review
-- At least 3 decisions must connect to design opportunities
+- relatedHeuristic MUST reference a UX principle from the UX Expert findings when available
+- Prefer decisions that are supported by Insights + Reasoning + UX Findings together
 - Sort by priority descending (Critical first).`;
 }

@@ -4,6 +4,7 @@ export interface ReasoningThread {
   userEvidence: string;
   behavioralInsight: string;
   insightTitle: string;
+  uxFinding?: string;
   pattern: string;
   confidence: number;
 }

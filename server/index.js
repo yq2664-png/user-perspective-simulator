@@ -15,6 +15,7 @@ import reasoning from './features/reasoning.js';
 import uxReview from './features/uxReview.js';
 import opportunities from './features/opportunities.js';
 import designReview from './features/designReview.js';
+import productUxReview from './features/productUxReview.js';
 import prd from './features/prd.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -33,6 +34,7 @@ app.post('/api/reasoning', reasoning);
 app.post('/api/ux-review', uxReview);
 app.post('/api/opportunities', opportunities);
 app.post('/api/design-review', designReview);
+app.post('/api/product-ux-review', upload.fields([{ name: 'screenshots', maxCount: 5 }]), productUxReview);
 app.post('/api/prd', prd);
 
 // Serve frontend in production

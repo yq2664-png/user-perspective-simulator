@@ -3,14 +3,14 @@ import { buildReasoningPrompt } from '../prompts/reasoning.js';
 import { extractJSON } from '../lib/json.js';
 
 export default async function reasoning(req, res) {
-  const { productName, insights, cards } = req.body;
+  const { productName, insights, cards, uxExpertReview } = req.body;
   if (!insights || !cards?.length) {
     return res.status(400).json({ error: 'Insights and perspective cards are required' });
   }
   try {
     const message = await openaiCreate(MODELS.fast, 4000, [{
       role: 'user',
-      content: buildReasoningPrompt(productName, insights, cards),
+      content: buildReasoningPrompt(productName, insights, cards, uxExpertReview),
     }]);
     const parsed = extractJSON(message.content[0].text);
     if (parsed) res.json(parsed);

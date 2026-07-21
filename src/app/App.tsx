@@ -1,29 +1,24 @@
 import { useEffect, useRef, useState } from 'react';
 import { decodeShare } from '@/shared/lib/shareLink';
 import {
-  trackAnalysisDepthSelected,
   trackCtaClicked,
   trackFlowStarted,
   trackPageView,
   trackPipelineCompleted,
   trackStepCompleted,
 } from '@/shared/lib/analytics';
-import type { AnalysisDepth } from './analysisDepth';
-import { getNavSteps } from './analysisDepth';
+import { getNavSteps } from './navSteps';
 import type { Page } from './routes';
 import type { FormData, Card, Insights } from '@/shared/types';
-import type { RealCard } from '@/features/perspectives/types';
+import type { RealCard, UxExpertReviewData } from '@/features/perspectives/types';
 import type { PRDData } from '@/features/decisions/types';
 import type { OpportunitiesData } from '@/features/opportunities/types';
-import type { DesignReviewData } from '@/features/design-review/types';
 import type { ReasoningData } from '@/features/reasoning/types';
 import LandingPage from '@/features/landing/LandingPage';
 import InputPage from '@/features/intake/InputPage';
-import AnalysisDepthPage from '@/features/analysis/AnalysisDepthPage';
 import SimulationPage from '@/features/perspectives/SimulationPage';
 import InsightPage from '@/features/insights/InsightPage';
 import ReasoningPage from '@/features/reasoning/ReasoningPage';
-import DesignReviewPage from '@/features/design-review/DesignReviewPage';
 import DecisionsPage from '@/features/decisions/DecisionsPage';
 import {
   DEMO_PRODUCT,
@@ -31,7 +26,6 @@ import {
   DEMO_CARDS,
   DEMO_INSIGHTS,
   DEMO_OPPORTUNITIES,
-  DEMO_DESIGN_REVIEW,
   DEMO_PRD,
 } from './demoData';
 
@@ -56,13 +50,12 @@ export default function App() {
   const [formData, setFormData] = useState<FormData>({ ...BLANK_FORM });
   const [cards, setCards] = useState<Card[]>([]);
   const [realCards, setRealCards] = useState<RealCard[]>([]);
+  const [uxExpertReview, setUxExpertReview] = useState<UxExpertReviewData | null>(null);
   const [insights, setInsights] = useState<Insights | null>(null);
   const [reasoningData, setReasoningData] = useState<ReasoningData | null>(null);
   const [opportunitiesData, setOpportunitiesData] = useState<OpportunitiesData | null>(null);
-  const [designReviewData, setDesignReviewData] = useState<DesignReviewData | null>(null);
   const [prdData, setPrdData] = useState<PRDData | null>(null);
   const [flowStarted, setFlowStarted] = useState(false);
-  const [analysisDepth, setAnalysisDepth] = useState<AnalysisDepth | null>(null);
   const skipAnalytics = useRef(
     new URLSearchParams(window.location.search).has('demo'),
   );
@@ -89,10 +82,8 @@ export default function App() {
     setInsights(DEMO_INSIGHTS);
     setReasoningData(DEMO_REASONING);
     setOpportunitiesData(DEMO_OPPORTUNITIES);
-    setDesignReviewData(DEMO_DESIGN_REVIEW);
     setPrdData(DEMO_PRD);
     setFlowStarted(true);
-    setAnalysisDepth('deep');
     setPage('decision');
     window.history.replaceState(null, '', window.location.pathname);
   }, []);
@@ -115,20 +106,14 @@ export default function App() {
         const payload = hash.startsWith('#decisions=') ? hash.slice(11) : hash.slice(5);
         const data = decodeShare<{
           prdData: PRDData;
-          designReviewData?: DesignReviewData;
-          uxReviewData?: DesignReviewData;
           opportunitiesData?: OpportunitiesData;
           productName: string;
         }>(payload);
         if (data.prdData && data.productName) {
           setPrdData(data.prdData);
-          if (data.designReviewData || data.uxReviewData) {
-            setDesignReviewData(data.designReviewData || data.uxReviewData!);
-          }
           if (data.opportunitiesData) setOpportunitiesData(data.opportunitiesData);
           setFormData(prev => ({ ...prev, productName: data.productName }));
           setFlowStarted(true);
-          setAnalysisDepth(data.designReviewData || data.uxReviewData ? 'deep' : 'standard');
           setPage('decision');
           window.history.replaceState(null, '', window.location.pathname);
         }
@@ -141,38 +126,29 @@ export default function App() {
     setTimeout(() => setPage(p), 50);
   };
 
-  const steps = getNavSteps(analysisDepth);
-  const stepIndex =
-    page === 'analysis-depth'
-      ? steps.findIndex(s => s.page === 'insights') + 1
-      : steps.findIndex(s => s.page === page);
+  const steps = getNavSteps();
+  const stepIndex = steps.findIndex(s => s.page === page);
 
   const isReachable = (p: Page) => {
     if (p === 'input') return true;
     if (p === 'simulation') return flowStarted;
-    if (p === 'insights') {
-      return flowStarted && hasPerspectiveEvidence(cards, realCards);
-    }
-    if (p === 'reasoning') return analysisDepth === 'deep' && insights !== null;
-    if (p === 'review') return analysisDepth === 'deep' && reasoningData !== null;
-    if (p === 'decision') {
-      if (analysisDepth === 'standard') return insights !== null;
-      if (analysisDepth === 'deep') return designReviewData !== null;
-    }
+    if (p === 'insights') return flowStarted && hasPerspectiveEvidence(cards, realCards);
+    if (p === 'reasoning') return insights !== null;
+    if (p === 'decision') return reasoningData !== null;
     return false;
   };
 
   const resetDownstream = (from: Page) => {
-    if (from === 'input' || from === 'simulation' || from === 'insights') {
+    if (from === 'input' || from === 'simulation') {
+      setInsights(null);
       setReasoningData(null);
       setOpportunitiesData(null);
-      setDesignReviewData(null);
+      setPrdData(null);
+    } else if (from === 'insights') {
+      setReasoningData(null);
+      setOpportunitiesData(null);
       setPrdData(null);
     } else if (from === 'reasoning') {
-      setOpportunitiesData(null);
-      setDesignReviewData(null);
-      setPrdData(null);
-    } else if (from === 'review') {
       setPrdData(null);
     }
   };
@@ -181,13 +157,12 @@ export default function App() {
     setFormData({ ...BLANK_FORM });
     setCards([]);
     setRealCards([]);
+    setUxExpertReview(null);
     setInsights(null);
     setReasoningData(null);
     setOpportunitiesData(null);
-    setDesignReviewData(null);
     setPrdData(null);
     setFlowStarted(false);
-    setAnalysisDepth(null);
   };
 
   return (
@@ -202,7 +177,7 @@ export default function App() {
         {page === 'landing' ? (
           <div className="page-container flex items-center h-11">
             <button
-              onClick={() => navigate(page === 'landing' ? 'landing' : 'simulation')}
+              onClick={() => navigate('landing')}
               className="text-xs font-semibold tracking-[0.12em] uppercase text-[#1D1D1F]"
             >
               User OS
@@ -277,14 +252,13 @@ export default function App() {
             onSubmit={() => {
               setCards([]);
               setRealCards([]);
+              setUxExpertReview(null);
               setInsights(null);
               setReasoningData(null);
               setOpportunitiesData(null);
-              setDesignReviewData(null);
               setPrdData(null);
               pipelineCompletedTracked.current = false;
               setFlowStarted(true);
-              setAnalysisDepth(null);
               if (!skipAnalytics.current) {
                 trackFlowStarted({ product_stage: formData.productStage });
               }
@@ -299,9 +273,10 @@ export default function App() {
             setCards={setCards}
             realCards={realCards}
             setRealCards={setRealCards}
+            uxExpertReview={uxExpertReview}
+            setUxExpertReview={setUxExpertReview}
             onNext={(cardsForAnalysis) => {
               setCards(cardsForAnalysis);
-              setAnalysisDepth(null);
               setInsights(null);
               resetDownstream('simulation');
               if (!skipAnalytics.current) trackStepCompleted('simulation');
@@ -313,37 +288,23 @@ export default function App() {
           <InsightPage
             productName={formData.productName}
             cards={cards}
+            uxExpertReview={uxExpertReview}
             insights={insights}
             setInsights={setInsights}
             onNext={(selectedInsights) => {
               setInsights(selectedInsights);
               resetDownstream('insights');
               if (!skipAnalytics.current) trackStepCompleted('insights');
-              navigate('analysis-depth');
+              navigate('reasoning');
             }}
           />
         )}
-        {page === 'analysis-depth' && flowStarted && hasPerspectiveEvidence(cards, realCards) && insights && (
-          <AnalysisDepthPage
-            productName={formData.productName || 'Your product'}
-            onContinue={(depth) => {
-              setAnalysisDepth(depth);
-              if (depth === 'standard') {
-                setReasoningData(null);
-                setOpportunitiesData(null);
-                setDesignReviewData(null);
-                setPrdData(null);
-              }
-              if (!skipAnalytics.current) trackAnalysisDepthSelected(depth);
-              navigate(depth === 'standard' ? 'decision' : 'reasoning');
-            }}
-          />
-        )}
-        {page === 'reasoning' && analysisDepth === 'deep' && insights && (
+        {page === 'reasoning' && insights && (
           <ReasoningPage
             productName={formData.productName}
             cards={cards}
             insights={insights}
+            uxExpertReview={uxExpertReview}
             reasoningData={reasoningData}
             setReasoningData={setReasoningData}
             opportunitiesData={opportunitiesData}
@@ -351,34 +312,17 @@ export default function App() {
             onNext={() => {
               resetDownstream('reasoning');
               if (!skipAnalytics.current) trackStepCompleted('reasoning');
-              navigate('review');
-            }}
-          />
-        )}
-        {page === 'review' && analysisDepth === 'deep' && insights && (
-          <DesignReviewPage
-            productName={formData.productName}
-            cards={cards}
-            insights={insights}
-            opportunitiesData={opportunitiesData}
-            setOpportunitiesData={setOpportunitiesData}
-            designReviewData={designReviewData}
-            setDesignReviewData={setDesignReviewData}
-            onNext={() => {
-              resetDownstream('review');
-              if (!skipAnalytics.current) trackStepCompleted('review');
               navigate('decision');
             }}
           />
         )}
-        {page === 'decision' && insights && analysisDepth && (
-          analysisDepth === 'standard' || designReviewData
-        ) && (
+        {page === 'decision' && insights && reasoningData && (
           <DecisionsPage
             productName={formData.productName}
             insights={insights}
+            uxExpertReview={uxExpertReview}
+            reasoningData={reasoningData}
             opportunitiesData={opportunitiesData}
-            designReviewData={designReviewData}
             prdData={prdData}
             setPrdData={setPrdData}
             onGoLanding={() => navigate('landing')}

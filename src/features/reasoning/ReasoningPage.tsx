@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Card, Insights } from '@/shared/types';
+import type { UxExpertReviewData } from '@/features/perspectives/types';
 import { ReasoningChain } from '@/features/ux-review/components/ReasoningChain';
 import type { OpportunitiesData } from '@/features/opportunities/types';
 import { getOpportunities } from '@/features/opportunities/api';
@@ -10,6 +11,7 @@ interface Props {
   productName: string;
   cards: Card[];
   insights: Insights;
+  uxExpertReview?: UxExpertReviewData | null;
   reasoningData: ReasoningData | null;
   setReasoningData: (d: ReasoningData) => void;
   opportunitiesData: OpportunitiesData | null;
@@ -18,16 +20,19 @@ interface Props {
 }
 
 const LOADING_STEPS = [
-  'Reading user perspectives',
-  'Matching evidence to insights',
-  'Tracing behavioral patterns',
+  'Reading user evidence',
+  'Matching behavior patterns',
+  'Connecting UX findings',
   'Building reasoning threads',
 ];
 
 function ThreadCard({ thread, index }: { thread: ReasoningThread; index: number }) {
   const steps = [
-    { label: 'User perspective', content: `${thread.perspective} — "${thread.userEvidence}"` },
-    { label: 'Behavioral insight', content: thread.behavioralInsight, emphasis: true },
+    { label: 'User evidence', content: `${thread.perspective} — "${thread.userEvidence}"` },
+    { label: 'Behavior pattern', content: thread.behavioralInsight, emphasis: true },
+    ...(thread.uxFinding
+      ? [{ label: 'UX finding', content: thread.uxFinding }]
+      : []),
     { label: 'Underlying pattern', content: thread.pattern, emphasis: true },
   ];
 
@@ -45,6 +50,7 @@ export default function ReasoningPage({
   productName,
   cards,
   insights,
+  uxExpertReview,
   reasoningData,
   setReasoningData,
   opportunitiesData,
@@ -74,7 +80,7 @@ export default function ReasoningPage({
       setStep(s);
     }, 2600);
     try {
-      const data = await getReasoning(productName, insights, cards);
+      const data = await getReasoning(productName, insights, cards, uxExpertReview);
       setReasoningData(data);
     } catch (e: any) {
       setError(e.message || 'Something went wrong.');
@@ -115,7 +121,7 @@ export default function ReasoningPage({
           )}
         </div>
         <p className="mt-3 text-sm" style={{ color: '#6E6E73' }}>
-          Connect user evidence to behavioral patterns before evaluating design.
+          Combine user evidence, behavior patterns, and UX findings into transparent reasoning threads.
         </p>
 
         {loading && (
@@ -176,10 +182,10 @@ export default function ReasoningPage({
           <div className="py-10 px-6 sm:px-10 rounded-2xl text-center" style={{ background: '#FBFAF6' }}>
             <p className="text-[10px] tracking-[0.18em] uppercase mb-3" style={{ color: '#127A74' }}>Next step</p>
             <p className="text-sm mb-6 max-w-md mx-auto leading-relaxed" style={{ color: '#6E6E73' }}>
-              Reasoning complete. Review synthesizes all threads across design frameworks — then you decide what to change.
+              Reasoning complete. Continue to generate evidence-backed product decisions.
             </p>
             <button onClick={handleContinue} disabled={continuing} className="btn-primary">
-              {continuing ? 'Preparing review…' : 'Run design review'}
+              {continuing ? 'Preparing decisions…' : 'Generate decisions'}
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>

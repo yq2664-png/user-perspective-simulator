@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import type { Card, FormData } from '@/shared/types';
-import type { RealCard } from './types';
-import { getRealPerspectives, streamSimulation } from './api';
+import type { RealCard, UxExpertReviewData } from './types';
+import { getRealPerspectives, streamSimulation, getProductUxReview } from './api';
+import UxExpertReviewSection from './components/UxExpertReviewSection';
 
 function HighlightedThought({ thought, highlight }: { thought: string; highlight?: string }) {
   if (!highlight) return <span style={{ color: '#1D1D1F' }}>{thought}</span>;
@@ -155,6 +156,8 @@ interface Props {
   setCards: Dispatch<SetStateAction<Card[]>>;
   realCards: RealCard[];
   setRealCards: (c: RealCard[] | ((prev: RealCard[]) => RealCard[])) => void;
+  uxExpertReview: UxExpertReviewData | null;
+  setUxExpertReview: (data: UxExpertReviewData | null) => void;
   onNext: (cardsForAnalysis: Card[]) => void;
 }
 
@@ -174,7 +177,7 @@ function realCardToAnalysisCard(rc: RealCard): Card {
   };
 }
 
-export default function SimulationPage({ formData, cards, setCards, realCards, setRealCards, onNext }: Props) {
+export default function SimulationPage({ formData, cards, setCards, realCards, setRealCards, uxExpertReview, setUxExpertReview, onNext }: Props) {
   const [streaming, setStreaming] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [done, setDone] = useState(cards.length > 0);
@@ -184,6 +187,10 @@ export default function SimulationPage({ formData, cards, setCards, realCards, s
   const [realLoading, setRealLoading] = useState(false);
   const [realError, setRealError] = useState('');
   const [realAttempted, setRealAttempted] = useState(false);
+
+  const [uxReviewLoading, setUxReviewLoading] = useState(false);
+  const [uxReviewError, setUxReviewError] = useState('');
+  const uxReviewStartedRef = useRef(false);
 
   const bufferRef = useRef('');
   const cardsRef = useRef<Card[]>(cards);
@@ -204,6 +211,26 @@ export default function SimulationPage({ formData, cards, setCards, realCards, s
     realStartedRef.current = true;
     fetchRealPerspectives();
   }, [showReal]);
+
+  useEffect(() => {
+    if (!done || uxReviewStartedRef.current) return;
+    uxReviewStartedRef.current = true;
+    fetchUxExpertReview();
+  }, [done]);
+
+  async function fetchUxExpertReview() {
+    setUxReviewLoading(true);
+    setUxReviewError('');
+    try {
+      const analysisCards = [...cardsRef.current, ...realCards.map(realCardToAnalysisCard)];
+      const data = await getProductUxReview(formData, analysisCards);
+      setUxExpertReview(data);
+    } catch (e: any) {
+      setUxReviewError(e.message || 'Could not complete UX expert review.');
+    } finally {
+      setUxReviewLoading(false);
+    }
+  }
 
   async function fetchRealPerspectives(searchMore = false) {
     setRealLoading(true);
@@ -522,96 +549,102 @@ export default function SimulationPage({ formData, cards, setCards, realCards, s
         </button>
       )}
 
-      {/* Your Perspectives — user-added, kept in their own section */}
-      {done && cards.some(c => c.manual) && (
+      {/* Add your own perspective — directly after simulated set, before UX review */}
+      {done && (
         <div className="mt-12">
-          <div className="flex items-baseline gap-4 mb-3">
-            <h2 className="text-2xl font-semibold" style={{ color: '#1D1D1F' }}>Your Perspectives</h2>
-            <span className="text-[9px] tracking-widest uppercase" style={{ color: '#6E6E73' }}>Added by you</span>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {cards.map((card, i) => card.manual && (
-              <PersonaCard key={`you-${i}`} card={card} index={i} onRemove={() => removeCard(i)} />
-            ))}
-          </div>
+          {cards.some(c => c.manual) && (
+            <>
+              <div className="flex items-baseline gap-4 mb-3">
+                <h2 className="text-2xl font-semibold" style={{ color: '#1D1D1F' }}>Your Perspectives</h2>
+                <span className="text-[9px] tracking-widest uppercase" style={{ color: '#6E6E73' }}>Added by you</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8">
+                {cards.map((card, i) => card.manual && (
+                  <PersonaCard key={`you-${i}`} card={card} index={i} onRemove={() => removeCard(i)} />
+                ))}
+              </div>
+            </>
+          )}
+
+          {!showManual ? (
+            <button
+              onClick={() => setShowManual(true)}
+              className="text-sm font-medium w-full flex items-center justify-end gap-1.5 transition-opacity"
+              style={{ background: 'none', border: 'none', padding: 0, color: '#127A74' }}
+            >
+              <svg width="14" height="14" viewBox="0 0 12 12" fill="none">
+                <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+              Add your own perspective
+              <span className="ml-1 normal-case font-normal" style={{ color: '#A1A1A6' }}>optional</span>
+            </button>
+          ) : (
+            <>
+              <p className="text-sm font-semibold mb-1" style={{ color: '#1D1D1F' }}>
+                Add your own perspective
+                <span className="ml-1.5 text-xs normal-case font-normal" style={{ color: '#A1A1A6' }}>optional</span>
+              </p>
+              <p className="text-xs mb-4" style={{ color: '#6E6E73' }}>
+                Heard something real from a user, a review, or an interview? Add it — it’s analyzed alongside the simulated ones.
+              </p>
+              <div className="flex flex-col gap-2">
+                <input
+                  type="text"
+                  value={manualLabel}
+                  onChange={e => setManualLabel(e.target.value)}
+                  placeholder="Perspective type (optional) — e.g. Power user, Skeptic"
+                  className="w-full rounded-xl px-4 py-2.5 outline-none"
+                  style={{ fontSize: '14px', background: '#FBFAF6', border: 'none', color: '#1D1D1F' }}
+                />
+                <textarea
+                  value={manualThought}
+                  onChange={e => setManualThought(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) addManualCard(); }}
+                  rows={2}
+                  placeholder="What did they actually say or do? (first-person works best)"
+                  className="w-full rounded-xl px-4 py-2.5 outline-none resize-none"
+                  style={{ fontSize: '14px', background: '#FBFAF6', border: 'none', color: '#1D1D1F' }}
+                />
+                <div className="flex justify-end">
+                  <button
+                    onClick={addManualCard}
+                    disabled={!manualThought.trim()}
+                    className={`text-xs font-medium inline-flex items-center gap-1 transition-opacity ${!manualThought.trim() ? 'opacity-30 cursor-not-allowed' : ''}`}
+                    style={{ background: 'none', border: 'none', padding: 0, color: '#127A74' }}
+                  >
+                    Add perspective
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
 
-      {/* Footer actions */}
       {done && (
-        <div className="mt-12">
-          {/* Add your own — optional; collapsed until the user opts in */}
-          <div className="mt-8">
-            {!showManual ? (
-              <button
-                onClick={() => setShowManual(true)}
-                className="text-sm font-medium w-full flex items-center justify-end gap-1.5 transition-opacity"
-                style={{ background: 'none', border: 'none', padding: 0, color: '#127A74' }}
-              >
-                <svg width="14" height="14" viewBox="0 0 12 12" fill="none">
-                  <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-                Add your own perspective
-                <span className="ml-1 normal-case font-normal" style={{ color: '#A1A1A6' }}>optional</span>
-              </button>
-            ) : (
-            <>
-            <p className="text-sm font-semibold mb-1" style={{ color: '#1D1D1F' }}>
-              Add your own perspective
-              <span className="ml-1.5 text-xs normal-case font-normal" style={{ color: '#A1A1A6' }}>optional</span>
-            </p>
-            <p className="text-xs mb-4" style={{ color: '#6E6E73' }}>
-              Heard something real from a user, a review, or an interview? Add it — it’s analyzed alongside the simulated ones.
-            </p>
-            <div className="flex flex-col gap-2">
-              <input
-                type="text"
-                value={manualLabel}
-                onChange={e => setManualLabel(e.target.value)}
-                placeholder="Perspective type (optional) — e.g. Power user, Skeptic"
-                className="w-full rounded-xl px-4 py-2.5 outline-none"
-                style={{ fontSize: '14px', background: '#FBFAF6', border: 'none', color: '#1D1D1F' }}
-              />
-              <textarea
-                value={manualThought}
-                onChange={e => setManualThought(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) addManualCard(); }}
-                rows={2}
-                placeholder="What did they actually say or do? (first-person works best)"
-                className="w-full rounded-xl px-4 py-2.5 outline-none resize-none"
-                style={{ fontSize: '14px', background: '#FBFAF6', border: 'none', color: '#1D1D1F' }}
-              />
-              <div className="flex justify-end">
-                <button
-                  onClick={addManualCard}
-                  disabled={!manualThought.trim()}
-                  className={`text-xs font-medium inline-flex items-center gap-1 transition-opacity ${!manualThought.trim() ? 'opacity-30 cursor-not-allowed' : ''}`}
-                  style={{ background: 'none', border: 'none', padding: 0, color: '#127A74' }}
-                >
-                  Add perspective
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                    <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-            </>
-            )}
-          </div>
+        <UxExpertReviewSection
+          productName={formData.productName}
+          loading={uxReviewLoading}
+          error={uxReviewError}
+          data={uxExpertReview}
+          onRetry={fetchUxExpertReview}
+        />
+      )}
 
-          {selectedCount > 0 && (
-            <div className="mt-10 pt-8 flex items-center justify-between" style={{ borderTop: '1px solid #D2D2D7' }}>
-              <p className="text-sm" style={{ color: '#6E6E73' }}>
-                {selectedCount} perspective{selectedCount !== 1 ? 's' : ''} selected
-              </p>
-              <button onClick={() => onNext(cardsForAnalysis)} className="btn-primary">
-                Analyze Insights
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </button>
-            </div>
-          )}
+      {done && selectedCount > 0 && (
+        <div className="mt-10 pt-8 flex items-center justify-between" style={{ borderTop: '1px solid #D2D2D7' }}>
+          <p className="text-sm" style={{ color: '#6E6E73' }}>
+            {selectedCount} perspective{selectedCount !== 1 ? 's' : ''} selected
+          </p>
+          <button onClick={() => onNext(cardsForAnalysis)} className="btn-primary">
+            Analyze Insights
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M1 7h12M7 1l6 6-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
         </div>
       )}
     </main>

@@ -15,7 +15,7 @@ const STEPS = [
     num: '02',
     title: 'Perspectives',
     question: 'Bring every user voice together',
-    body: 'Combine real user feedback with AI-simulated perspectives to build a richer understanding of your users.',
+    body: 'Combine user perspectives, real voices, and UX Expert Perspective findings into one evidence base.',
   },
   {
     num: '03',
@@ -27,16 +27,10 @@ const STEPS = [
     num: '04',
     title: 'Reasoning',
     question: 'Connect the dots',
-    body: 'AI links research evidence, behavioral patterns, and UX knowledge to explain why problems emerge.',
+    body: 'AI links research evidence and behavioral patterns to explain why problems emerge.',
   },
   {
     num: '05',
-    title: 'Review',
-    question: 'Review your design',
-    body: 'Evaluate the experience, identify usability issues, and recommend improvements backed by research evidence.',
-  },
-  {
-    num: '06',
     title: 'Decisions',
     question: 'Turn insights into action',
     body: 'Generate prioritized product decisions and requirements grounded in user research.',
