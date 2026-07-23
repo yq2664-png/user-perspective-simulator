@@ -14,8 +14,8 @@ const STEPS = [
   {
     num: '02',
     title: 'Perspectives',
-    question: 'Bring every user voice together',
-    body: 'Combine user perspectives, real voices, and UX Expert Perspective findings into one evidence base.',
+    question: 'Bring every voice together',
+    body: 'Combine real voices, simulated perspectives, and UX Expert Perspective findings into one evidence base.',
   },
   {
     num: '03',
@@ -27,13 +27,13 @@ const STEPS = [
     num: '04',
     title: 'Reasoning',
     question: 'Connect the dots',
-    body: 'AI links research evidence and behavioral patterns to explain why problems emerge.',
+    body: 'Combine user evidence, behavior patterns, and UX findings into transparent reasoning threads.',
   },
   {
     num: '05',
     title: 'Decisions',
     question: 'Turn insights into action',
-    body: 'Generate prioritized product decisions and requirements grounded in user research.',
+    body: 'Generate prioritized product decisions grounded in insights, reasoning, and UX findings.',
   },
 ];
 
@@ -41,7 +41,7 @@ const FEATURES = [
   {
     label: 'Perspectives',
     title: "See through your users' eyes",
-    body: 'Combine real user feedback and AI-generated perspectives to understand how different users experience your product.',
+    body: 'Bring together real voices, AI-simulated perspectives, and UX Expert Perspective findings.',
   },
   {
     label: 'Insights',
@@ -49,14 +49,14 @@ const FEATURES = [
     body: 'Discover motivations, unmet needs, trust issues, and decision barriers behind user behavior.',
   },
   {
-    label: 'Recommendations',
-    title: 'Improve with confidence',
-    body: 'Receive evidence-backed design recommendations that explain what to improve and why.',
+    label: 'Reasoning',
+    title: 'Make the evidence visible',
+    body: 'Trace how user evidence, behavior patterns, and UX findings connect before you decide.',
   },
   {
     label: 'Decisions',
     title: 'Turn insights into action',
-    body: 'Generate prioritized product decisions and requirements grounded in user research.',
+    body: 'Generate prioritized product decisions and requirements grounded in the full research chain.',
   },
 ];
 
