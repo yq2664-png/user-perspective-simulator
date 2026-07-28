@@ -21,19 +21,17 @@ interface Props {
 
 const LOADING_STEPS = [
   'Reading user evidence',
-  'Matching behavior patterns',
-  'Connecting UX findings',
-  'Building reasoning threads',
+  'Mapping evidence to insights',
+  'Connecting UX principles',
+  'Building reasoning chains',
 ];
 
 function ThreadCard({ thread, index }: { thread: ReasoningThread; index: number }) {
   const steps = [
     { label: 'User evidence', content: `${thread.perspective} — "${thread.userEvidence}"` },
-    { label: 'Behavior pattern', content: thread.behavioralInsight, emphasis: true },
-    ...(thread.uxFinding
-      ? [{ label: 'UX finding', content: thread.uxFinding }]
-      : []),
-    { label: 'Underlying pattern', content: thread.pattern, emphasis: true },
+    { label: 'Behavioral insight', content: thread.behavioralInsight, emphasis: true },
+    { label: 'UX finding', content: thread.uxFinding || thread.insightTitle },
+    { label: 'Design implication', content: thread.pattern, emphasis: true },
   ];
 
   return (
@@ -171,7 +169,7 @@ export default function ReasoningPage({
           </section>
 
           <section className="mb-10">
-            <p className="step-section-title">Opportunity</p>
+            <p className="step-section-title">Reasoning chains</p>
             <div className="space-y-4">
               {reasoningData.threads.map((thread, i) => (
                 <ThreadCard key={thread.id} thread={thread} index={i} />

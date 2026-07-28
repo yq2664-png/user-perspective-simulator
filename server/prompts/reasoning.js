@@ -27,18 +27,18 @@ Behavioral insights:
 ${JSON.stringify(insights, null, 2)}${formatUxFindings(uxExpertReview)}
 
 For each thread, trace:
-User Evidence → Behavioral Pattern → UX Finding (when relevant) → Underlying Pattern
+User Evidence → Behavioral Insight → UX Finding → Design Implication
 
 Rules:
 - "userEvidence" must cite observable behavior or quotes from perspectives.
 - "behavioralInsight" must reference or paraphrase a specific insight finding.
 - "insightTitle" must name the exact insight title from the insights data.
-- "uxFinding" (optional string): title or finding text from UX Expert Perspective when it supports the thread; omit or use "" if none.
-- "pattern" describes the underlying behavioral pattern in one sentence.
+- "uxFinding" must cite a title or finding from UX Expert Perspective when available; if none applies, write a short UX finding grounded in the same evidence.
+- "pattern" is the design implication — what this means for product/design decisions, in one sentence.
 - "perspective" must name the exact perspective label from user perspectives.
 - confidence: integer 0–100
 - Generate 3–5 threads, sorted by confidence descending.
-- Prefer threads that connect user evidence + behavior patterns + UX findings.
+- Prefer threads that connect user evidence + behavioral insights + UX findings.
 - synthesis: 1–2 short sentences, max 35 words total. One clear behavioral takeaway — no lists, no repetition of thread details.
 
 Return ONLY valid JSON:
@@ -53,7 +53,7 @@ Return ONLY valid JSON:
       "behavioralInsight": "The supporting insight finding",
       "insightTitle": "Exact insight title",
       "uxFinding": "Onboarding Complexity — users struggle to know where to start",
-      "pattern": "Underlying behavioral pattern",
+      "pattern": "Design implication: reduce early complexity before asking for commitment",
       "confidence": 90
     }
   ]
