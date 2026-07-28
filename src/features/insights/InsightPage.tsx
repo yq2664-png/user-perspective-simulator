@@ -342,9 +342,9 @@ export default function InsightPage({ productName, cards, uxExpertReview, insigh
 
   const INSIGHT_STEPS = [
     'Reading user perspectives',
-    'Identifying patterns',
-    'Scoring by business impact',
-    'Surfacing opportunities',
+    'Synthesizing behavioral patterns',
+    'Prioritizing insights by impact',
+    'Identifying user needs',
   ];
   const [insightStep, setInsightStep] = useState(0);
   const insightStepTimer = useRef<ReturnType<typeof setInterval> | null>(null);
